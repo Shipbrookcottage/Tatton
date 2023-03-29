@@ -26,12 +26,12 @@ float SampleCurrent(int duration) {
     adc_value = analogRead(Current_In_Pin);
     adc_voltage = adc_value * reference_voltage / 1024;
     primary_current = (nominal_current * (adc_voltage - transducer_ref)) / 0.625;
-    total += primary_current; 
+    total += primary_current;
     delay(sample_time);
     endtime = millis();
   }
 
-  float avg_current = total / samples;
+  float avg_current = (2.05 * total) / samples;
   return avg_current;
 }
 
@@ -55,7 +55,7 @@ float SampleVoltage(int duration) {
     endtime = millis();
   }
 
-  float avg_voltage = (2 * total) / samples;
+  float avg_voltage = (1.85 * total) / samples;
   return avg_voltage;
 }
 
