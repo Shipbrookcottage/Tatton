@@ -1,4 +1,4 @@
-// This is code the will sense ac current and voltage around a PWM period of 200ms
+// This is code the will sense current and voltage around a PWM period of 200ms
 #define Current_In_Pin A0
 #define Voltage_In_Pin A1
 #define PWM_Pin 2
