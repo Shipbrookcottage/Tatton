@@ -8,6 +8,9 @@ import matplotlib.animation as animation
 from matplotlib import style
 from queue import Queue
 from collections import deque
+import upload
+
+upload
 
 
 qC = deque(maxlen = 100) #queue data structure
