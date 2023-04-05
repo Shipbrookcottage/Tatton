@@ -10,13 +10,13 @@ from queue import Queue
 from collections import deque
 import upload
 
-upload
+#upload
 
 
 qC = deque(maxlen = 100) #queue data structure
 qV = deque(maxlen = 100)
 qxc = deque(maxlen = 100)
-qvc = deque(maxlen = 100)
+qxv = deque(maxlen = 100)
 tempc = 0 # temporary variable for current
 xc = [] # x-axis for current
 yc = [] # y-axis for current
@@ -27,7 +27,7 @@ tempv = 0 # temporary variable for voltage
 xv = [] # x-axis for voltage
 yv = [] # y-axis for voltage
 voltage = 0
-ser = serial.Serial('/dev/cu.usbmodem14101', 9600, timeout=1) # Establish the connection to the port used to sense current
+ser = serial.Serial('/dev/cu.usbmodem101', 9600, timeout=1) # Establish the connection to the port used to sense current
 
 style.use('fivethirtyeight')
 
@@ -66,16 +66,16 @@ def animate(i):
                         voltage = 0
                 except ValueError:
                     voltage = tempv
-                qvc.append(i)
+                qxv.append(i)
                 qV.append(voltage)
                 yv.append(voltage)
                 tempv = voltage
                 i += 0.2
                 av.clear()
-                av.plot(qvc, qV)
+                av.plot(qxv, qV)
 
                
 
-ani1 = animation.FuncAnimation(fig1, animate, interval=1, frames = 10, repeat = False)
-ani2 = animation.FuncAnimation(fig2,animate,interval =1,frames = 10, repeat = False)
+ani1 = animation.FuncAnimation(fig1, animate, interval=1, frames = 1000, repeat = False)
+ani2 = animation.FuncAnimation(fig2,animate,interval =1,frames = 1000, repeat = False)
 plt.show()
