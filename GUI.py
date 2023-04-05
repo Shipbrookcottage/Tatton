@@ -42,14 +42,14 @@ yv = [] # y-axis for voltage
 voltage = 0
 
 i = 0  # counter
-ser = serial.Serial('/dev/cu.usbmodem1101', 9600, timeout=1) # Establish the connection to the port used to sense current
+ser = serial.Serial('/dev/cu.usbmodem101', 9600, timeout=1) # Establish the connection to the port used to sense current
 
 # Current graph
-fig1 = Figure(figsize=(6.4,4.8), dpi=100)
+fig1 = Figure(figsize=(6,4), dpi=50)
 ac = fig1.add_subplot(1,1,1)
 
 # Voltage graph
-fig2 = Figure(figsize=(6.4,4.8), dpi=100)
+fig2 = Figure(figsize=(6,4), dpi=50)
 av = fig2.add_subplot(1,1,1)
 
 
@@ -251,7 +251,7 @@ class Graph(tk.Frame):
      
 # Driver code
 app = displayApp()
-ani1 = animation.FuncAnimation(fig1, animate, interval=1, frames = 2000, repeat = False)
-ani2 = animation.FuncAnimation(fig2, animate, interval=1, frames = 2000, repeat = False)
+ani1 = animation.FuncAnimation(fig1, animate, interval=1, frames = 200, repeat = False)
+ani2 = animation.FuncAnimation(fig2, animate, interval=1, frames = 200, repeat = False)
 plt.show()
 app.mainloop()
