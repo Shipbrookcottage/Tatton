@@ -236,6 +236,13 @@ class Graph(tk.Frame):
         canvas_1._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
         
         # For the second graph
+        canvas_2 = FigureCanvasTkAgg(fig2, self)
+        canvas_2.draw()
+        canvas_2.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        
+        toolbar = NavigationToolbar2Tk(canvas_2, self)
+        toolbar.update()
+        canvas_2._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
         
         
        
@@ -245,5 +252,6 @@ class Graph(tk.Frame):
 # Driver code
 app = displayApp()
 ani1 = animation.FuncAnimation(fig1, animate, interval=1, frames = 2000, repeat = False)
+ani2 = animation.FuncAnimation(fig2, animate, interval=1, frames = 2000, repeat = False)
 plt.show()
-app.mainloop()  
+app.mainloop()
