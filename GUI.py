@@ -45,11 +45,9 @@ i = 0  # counter
 ser = serial.Serial('/dev/cu.usbmodem101', 9600, timeout=1) # Establish the connection to the port used to sense current
 
 # Current graph
-fig1 = Figure(figsize=(6,4), dpi=50)
+fig1 = Figure(figsize=(12,10), dpi=50)
+fig2 = Figure(figsize=(12,10), dpi=50)
 ac = fig1.add_subplot(1,1,1)
-
-# Voltage graph
-fig2 = Figure(figsize=(6,4), dpi=50)
 av = fig2.add_subplot(1,1,1)
 
 
@@ -80,7 +78,7 @@ def animate(i):
                 ac.set_xlabel('Time (s)', fontsize=25)
                 ac.set_ylabel('Current (A)', fontsize=25)
                 ac.set_title('Current Plot', fontsize=30)
-            elif stripped_string == 'V':
+            if stripped_string[0] == 'V':
                 try:
                     voltage = float(stripped_string[1:])
                     if voltage < 10:
@@ -97,6 +95,7 @@ def animate(i):
                 av.set_xlabel('Time (s)', fontsize=25)
                 av.set_ylabel('Voltage (V)', fontsize=25)
                 av.set_title('Voltage Plot', fontsize=30)
+                
 
 class displayApp(tk.Tk):
     """ class to set up GUI """
@@ -225,7 +224,7 @@ class Graph(tk.Frame):
         # putting the button in its place by
         # using grid
         button1.pack()
-       
+
         # For the first graph
         canvas_1 = FigureCanvasTkAgg(fig1, self)
         canvas_1.draw()
@@ -234,7 +233,8 @@ class Graph(tk.Frame):
         toolbar = NavigationToolbar2Tk(canvas_1, self)
         toolbar.update()
         canvas_1._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
-        
+
+   
         # For the second graph
         canvas_2 = FigureCanvasTkAgg(fig2, self)
         canvas_2.draw()
@@ -243,6 +243,7 @@ class Graph(tk.Frame):
         toolbar = NavigationToolbar2Tk(canvas_2, self)
         toolbar.update()
         canvas_2._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
+
         
         
        
@@ -253,5 +254,4 @@ class Graph(tk.Frame):
 app = displayApp()
 ani1 = animation.FuncAnimation(fig1, animate, interval=1, frames = 200, repeat = False)
 ani2 = animation.FuncAnimation(fig2, animate, interval=1, frames = 200, repeat = False)
-plt.show()
 app.mainloop()
