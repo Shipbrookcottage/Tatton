@@ -96,6 +96,10 @@ def animate(i):
                 av.set_ylabel('Voltage (V)', fontsize=25)
                 av.set_title('Voltage Plot', fontsize=30)
                 
+def _quit(self):
+    self.quit()
+    self.destroy()
+                
 
 class displayApp(tk.Tk):
     """ class to set up GUI """
@@ -211,6 +215,9 @@ class Page2(tk.Frame):
         # putting the button in its place by
         # using grid
         button2.pack()
+        
+        button3 = ttk.Button(self, text="Quit", command=_quit)
+        button3.pack()
        
 class Graph(tk.Frame):
     def __init__(self, parent, controller):
@@ -224,6 +231,8 @@ class Graph(tk.Frame):
         # putting the button in its place by
         # using grid
         button1.pack()
+        
+        button2 = ttk.Button(self, text = "Quit", command = _quit(self)).pack()
 
         # For the first graph
         canvas_1 = FigureCanvasTkAgg(fig1, self)
@@ -244,11 +253,6 @@ class Graph(tk.Frame):
         toolbar.update()
         canvas_2._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
 
-        
-        
-       
-       
-       
      
 # Driver code
 app = displayApp()
