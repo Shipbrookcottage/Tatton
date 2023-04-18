@@ -17,6 +17,7 @@ import numpy as np
 import sys
 from matplotlib import style
 from collections import deque
+import threading
 
 import upload # script that uploads code to the arduino
 
@@ -49,6 +50,9 @@ fig1 = Figure(figsize=(12,10), dpi=50)
 fig2 = Figure(figsize=(12,10), dpi=50)
 ac = fig1.add_subplot(1,1,1)
 av = fig2.add_subplot(1,1,1)
+
+def animate_thread(i):
+    threading.Thread(target=animate, args=(i,)).start()
 
 
 def animate(i):
@@ -120,7 +124,7 @@ class displayApp(tk.Tk):
         self.frames = {}
        
         # iterate through a tuple with different pages
-        for F in (StartPage, Page1, Page2, Graph):
+        for F in (StartPage, Graph):
            
             frame = F(container, self)
            
@@ -133,6 +137,7 @@ class displayApp(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
+        
    
     # Start Page setup
    
@@ -145,79 +150,25 @@ class StartPage(tk.Frame):
            
         # placing the grid
         label.pack(padx = 10, pady = 10)
-           
-        button1 = ttk.Button(self, text = "Page 1", command = lambda : controller.show_frame(Page1))
-           
-        # placing the grid
-        button1.pack()
-           
-        # button for page 2
-        button2 = ttk.Button(self, text = "Page 2", command = lambda : controller.show_frame(Page2))
-           
-        # placing button2
-        button2.pack()
+        
+        button2 = ttk.Button(self, text = "Quit", command = quit).pack()
        
         # button for page 3
         button3 = ttk.Button(self, text = "Graph",
                              command= lambda: controller.show_frame(Graph))
         # placing button3
         button3.pack()
-
-# second window frame page1
-class Page1(tk.Frame):
-     
-    def __init__(self, parent, controller):
-         
-        tk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text ="Page 1", font = LARGEFONT)
-        label.pack(padx = 10, pady = 10)
- 
-        # button to show frame 2 with text
-        # layout2
-        button1 = ttk.Button(self, text ="StartPage",
-                            command = lambda : controller.show_frame(StartPage))
-     
-        # putting the button in its place
-        # by using grid
-        button1.pack()
- 
-        # button to show frame 2 with text
-        # layout2
-        button2 = ttk.Button(self, text ="Page 2",
-                            command = lambda : controller.show_frame(Page2))
-     
-        # putting the button in its place by
-        # using grid
-        button2.pack()
-
- 
-# third window frame page2
-class Page2(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text ="Page 2", font = LARGEFONT)
-        label.pack(padx = 10, pady = 10)
- 
-        # button to show page 1 with text
-        # layout2
-        button1 = ttk.Button(self, text ="Page 1",
-                            command = lambda : controller.show_frame(Page1))
-     
-        # putting the button in its place by
-        # using grid
-        button1.pack()
- 
-        # button to show start page with text
-        # layout3
-        button2 = ttk.Button(self, text ="Startpage",
-                            command = lambda : controller.show_frame(StartPage))
-     
-        # putting the button in its place by
-        # using grid
-        button2.pack()
         
-        button3 = ttk.Button(self, text="Quit", command=_quit)
-        button3.pack()
+        powerframe = ttk.LabelFrame(self, text="Power Generation").pack(fill="both", expand="yes")
+        powerlabel = ttk.Label(powerframe, text="Power")
+        
+        speedframe = ttk.LabelFrame(self, text="Pedal Speed").pack(fill="both", expand="yes")
+        speedlabel = ttk.Label(speedframe, text="Speed")
+        
+        energyframe = ttk.LabelFrame(self, text="Cumlative Energy").pack(fill="both", expand="yes")
+        energylabel = ttk.Label(energyframe, text="Energy")
+
+# Frame to show graph
        
 class Graph(tk.Frame):
     def __init__(self, parent, controller):
@@ -232,30 +183,36 @@ class Graph(tk.Frame):
         # using grid
         button1.pack()
         
-        button2 = ttk.Button(self, text = "Quit", command = _quit(self)).pack()
+        button2 = ttk.Button(self, text = "Quit", command = quit).pack()
 
         # For the first graph
         canvas_1 = FigureCanvasTkAgg(fig1, self)
         canvas_1.draw()
-        canvas_1.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        canvas_1.get_tk_widget().pack(side = "right", fill=tk.BOTH, expand=True)
        
         toolbar = NavigationToolbar2Tk(canvas_1, self)
         toolbar.update()
-        canvas_1._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
+        canvas_1._tkcanvas.pack(side = "right", fill = tk.BOTH, expand = True)
 
    
         # For the second graph
         canvas_2 = FigureCanvasTkAgg(fig2, self)
         canvas_2.draw()
-        canvas_2.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        canvas_2.get_tk_widget().pack(side = "left", fill=tk.BOTH, expand=True)
         
         toolbar = NavigationToolbar2Tk(canvas_2, self)
         toolbar.update()
-        canvas_2._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
+        canvas_2._tkcanvas.pack(side = "left", fill = tk.BOTH, expand = True)
+    
+    
+    
+        
+        
+        
 
      
 # Driver code
 app = displayApp()
-ani1 = animation.FuncAnimation(fig1, animate, interval=1, frames = 200, repeat = False)
-ani2 = animation.FuncAnimation(fig2, animate, interval=1, frames = 200, repeat = False)
+ani1 = animation.FuncAnimation(fig1, animate_thread, interval=1, frames = 200, repeat = False)
+ani2 = animation.FuncAnimation(fig2, animate_thread, interval=1, frames = 200, repeat = False)
 app.mainloop()
