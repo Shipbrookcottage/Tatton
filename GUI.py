@@ -52,7 +52,54 @@ ac = fig1.add_subplot(1,1,1)
 av = fig2.add_subplot(1,1,1)
 
 def animate_thread(i):
-    threading.Thread(target=animate, args=(i,)).start()
+    t_ani = threading.Thread(target=animate, args=(i,)).start()
+    
+def current_thread(data, i):
+    t_c = threading.Thread(target=current_plot, args=(data,i,)).start()
+    
+def voltage_thread(data, i):
+    t_v = threading.Thread(target=voltage_plot, args=(data,i,)).start()
+    
+def current_plot(stripped_string, i):
+    try:
+        current = float(stripped_string[1:])
+        if current < 0:
+            current = 0
+    except ValueError:
+        current = tempc
+    qxc.append(i)
+    xc.append(i)
+               
+    qC.append(current)
+    yc.append(current)
+           
+    tempc = current
+    i += 0.2
+    ac.clear()
+    ac.plot(qxc, qC)
+    ac.set_xlabel('Time (s)', fontsize=25)
+    ac.set_ylabel('Current (A)', fontsize=25)
+    ac.set_title('Current Plot', fontsize=30)
+            
+def voltage_plot(stripped_string, i):
+    try:
+        voltage = float(stripped_string[1:])
+        if voltage < 10:
+            voltage = 0
+    except ValueError:
+        voltage = tempv
+    qxv.append(i)
+    qV.append(voltage)
+    yv.append(voltage)
+    tempv = voltage
+    i += 0.2
+    av.clear()
+    av.plot(qxv, qV)
+    av.set_xlabel('Time (s)', fontsize=25)
+    av.set_ylabel('Voltage (V)', fontsize=25)
+    av.set_title('Voltage Plot', fontsize=30)
+    
+        
 
 
 def animate(i):
@@ -63,46 +110,9 @@ def animate(i):
         stripped_string = string.strip()
         if len(stripped_string) > 0:
             if stripped_string[0] == 'C':
-                try:
-                    current = float(stripped_string[1:])
-                    if current < 0:
-                        current = 0
-                except ValueError:
-                    current = tempc
-                qxc.append(i)
-                xc.append(i)
-               
-                qC.append(current)
-                yc.append(current)
-               
-                tempc = current
-                i += 0.2
-                ac.clear()
-                ac.plot(qxc, qC)
-                ac.set_xlabel('Time (s)', fontsize=25)
-                ac.set_ylabel('Current (A)', fontsize=25)
-                ac.set_title('Current Plot', fontsize=30)
+                current_thread(stripped_string, i)
             if stripped_string[0] == 'V':
-                try:
-                    voltage = float(stripped_string[1:])
-                    if voltage < 10:
-                        voltage = 0
-                except ValueError:
-                    voltage = tempv
-                qxv.append(i)
-                qV.append(voltage)
-                yv.append(voltage)
-                tempv = voltage
-                i += 0.2
-                av.clear()
-                av.plot(qxv, qV)
-                av.set_xlabel('Time (s)', fontsize=25)
-                av.set_ylabel('Voltage (V)', fontsize=25)
-                av.set_title('Voltage Plot', fontsize=30)
-                
-def _quit(self):
-    self.quit()
-    self.destroy()
+                voltage_thread(stripped_string, i)
                 
 
 class displayApp(tk.Tk):
@@ -154,8 +164,7 @@ class StartPage(tk.Frame):
         button2 = ttk.Button(self, text = "Quit", command = quit).pack()
        
         # button for page 3
-        button3 = ttk.Button(self, text = "Graph",
-                             command= lambda: controller.show_frame(Graph))
+        button3 = ttk.Button(self, text = "Graph", command = lambda: [controller.show_frame(Graph), graph])
         # placing button3
         button3.pack()
         
@@ -177,11 +186,9 @@ class Graph(tk.Frame):
         label.pack(pady = 10, padx = 10)
        
         # button to show start page with text
-        button1 = ttk.Button(self, text="Home",
-                             command= lambda : controller.show_frame(StartPage))
+        button1 = ttk.Button(self, text="Home", command= lambda : controller.show_frame(StartPage)).pack()
         # putting the button in its place by
         # using grid
-        button1.pack()
         
         button2 = ttk.Button(self, text = "Quit", command = quit).pack()
 
@@ -205,14 +212,11 @@ class Graph(tk.Frame):
         canvas_2._tkcanvas.pack(side = "left", fill = tk.BOTH, expand = True)
     
     
-    
-        
-        
-        
-
-     
+#def graph():
+    #ani1 = animation.FuncAnimation(fig1, animate_thread, interval=1, frames = 2000, repeat = False)
+   # ani2 = animation.FuncAnimation(fig2, animate_thread, interval=1, frames = 2000, repeat = False)
 # Driver code
 app = displayApp()
-ani1 = animation.FuncAnimation(fig1, animate_thread, interval=1, frames = 200, repeat = False)
-ani2 = animation.FuncAnimation(fig2, animate_thread, interval=1, frames = 200, repeat = False)
+ani1 = animation.FuncAnimation(fig1, animate_thread, interval=1, frames = 2000, repeat = False)
+ani2 = animation.FuncAnimation(fig2, animate_thread, interval=1, frames = 2000, repeat = False)
 app.mainloop()
