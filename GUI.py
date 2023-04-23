@@ -26,22 +26,32 @@ style.use('fivethirtyeight')
 ser = serial.Serial('/dev/cu.usbmodem1301', 9600, timeout=1) # Establish the connection to the port used to sense current
 qC = deque(maxlen = 50) #queue data structure
 qV = deque(maxlen = 50)
+qP = deque(maxlen = 50)
 qxc = deque(maxlen = 50)
 qxv = deque(maxlen = 50)
+qxp = deque(maxlen = 50)
 tempc = 0 # temporary variable for current
 xc = [] # x-axis for current
 yc = [] # y-axis for current
 current = 0
+
 tempv = 0 # temporary variable for voltage
 xv = [] # x-axis for voltage
 yv = [] # y-axis for voltage
 voltage = 0
+
+tempp = 0
+xp = []
+yp = []
+power = 0
+
 i = 0  # counter
-# Current graph
 fig1 = Figure(dpi=50)
 fig2 = Figure(dpi=50)
+fig3 = Figure(dpi=50)
 ac = fig1.add_subplot(1,1,1)
 av = fig2.add_subplot(1,1,1)
+ap = fig3.add_subplot(1,1,1)
 
 
 def animate(i):
@@ -65,7 +75,7 @@ def animate(i):
                 yc.append(current)
                
                 tempc = current
-                i += 0.2
+                #i += 0.2
                 ac.clear()
                 ac.plot(qxc, qC)
                 ac.set_xlabel('Time (s)', fontsize=25)
@@ -82,12 +92,29 @@ def animate(i):
                 qV.append(voltage)
                 yv.append(voltage)
                 tempv = voltage
-                i += 0.2
+                #i += 0.2
                 av.clear()
                 av.plot(qxv, qV)
                 av.set_xlabel('Time (s)', fontsize=25)
                 av.set_ylabel('Voltage (V)', fontsize=25)
                 av.set_title('Voltage Plot', fontsize=30)
+            if stripped_string[0] == 'P':
+                try:
+                    power = float(stripped_string[1:])
+                    if power < 10:
+                        power = 0
+                except ValueError:
+                    power = tempp
+                qxp.append(i)
+                qP.append(power)
+                yp.append(power)
+                tempp = power
+                #i += 0.2
+                ap.clear()
+                ap.plot(qxp, qP)
+                ap.set_xlabel('Time (s)', fontsize=25)
+                ap.set_ylabel('Power (P)', fontsize=25)
+                ap.set_title('Power Plot', fontsize=30)
                 
 
 class displayApp(tk.Tk):
@@ -141,7 +168,7 @@ class Graph(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-        # For the first graph
+        # For the current graph
         canvas_1 = FigureCanvasTkAgg(fig1, self)
         canvas_1.draw()
         canvas_1.get_tk_widget().place(x=10, y=-350, width=400, height=450)
@@ -151,14 +178,25 @@ class Graph(tk.Frame):
         canvas_1._tkcanvas.place(x=10, y=80, width=400)
 
    
-        # For the second graph
+        # For the voltage graph
         canvas_2 = FigureCanvasTkAgg(fig2, self)
         canvas_2.draw()
-        canvas_2.get_tk_widget().place(x=10, y=-350, width=500, height=450)
+        canvas_2.get_tk_widget().place(x=410, y=-350, width=500, height=450)
         
         toolbar2 = NavigationToolbar2Tk(canvas_2, self)
         toolbar2.update()
-        canvas_2._tkcanvas.place(x=410, y=80, width=500)
+        canvas_2._tkcanvas.place(x=460, y=80, width=500)
+        
+        # For the power graph
+        canvas_3 = FigureCanvasTkAgg(fig3, self)
+        canvas_3.draw()
+        canvas_3.get_tk_widget().place(x=10, y=-350, width=400, height=450)
+        
+        toolbar3 = NavigationToolbar2Tk(canvas_3, self)
+        toolbar3.update()
+        canvas_3._tkcanvas.place(x=960, y=80, width=400)
+        
+        
         
         label = ttk.Label(self, text = "Graph", font = LARGEFONT).pack()
         
@@ -173,4 +211,5 @@ class Graph(tk.Frame):
 app = displayApp()
 ani1 = animation.FuncAnimation(fig1, animate, interval=50, frames = 60, repeat = False)
 ani2 = animation.FuncAnimation(fig2, animate, interval=50, frames = 60, repeat = False)
+ani3 = animation.FuncAnimation(fig3, animate, interval=50, frames = 60, repeat = False)
 app.mainloop()
