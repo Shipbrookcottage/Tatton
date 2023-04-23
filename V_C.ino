@@ -2,7 +2,7 @@
 // with LED strip integrated
 #include <FastLED.h>
 
-#define Current_In_Pin A5
+#define Current_In_Pin A0
 #define Voltage_In_Pin A1
 #define PWM_Pin 2
 #define LED_PIN 8
@@ -10,7 +10,7 @@
 CRGB leds[NUM_LEDS];
 
 int sampling_period  = 200;
-float duty_cycle  = 0.5;
+float duty_cycle  = 1;
 int duration  = 5;
 float t_on = duty_cycle * sampling_period;
 float t_off = sampling_period - t_on;
@@ -75,8 +75,6 @@ void setup() {
   Serial.begin(9600);
   analogReference(EXTERNAL);
 
-  Serial.println("Start");
-
 }
 
 void loop() {
@@ -98,11 +96,18 @@ void loop() {
 
   digitalWrite(PWM_Pin, LOW);
 
+  float avg_current = duty_cycle * (total_c / (t_on/(duration * 2)));
+  //Serial.print("C");
+  //Serial.println(avg_current, 5);
+
   float avg_voltage = duty_cycle * (total_v / (t_on/(duration * 2)));
+  //Serial.print("V");
+  //Serial.println(avg_voltage, 5); // send voltage to python averaged over the 200 ms period
 
-  Serial.print("V");
-  Serial.println(avg_voltage, 5); // send voltage to python averaged over the 200 ms period
-
+  float inst_power = avg_current * avg_voltage;
+  //Serial.print("P");
+  //Serial.println(inst_power, 5);
+  Serial.print(avg_current, 5); Serial.print(","); Serial.print(avg_voltage, 5); Serial.print(","); Serial.print(inst_power, 5); Serial.println("");
   int val = map(avg_voltage, 0, 150, 0, NUM_LEDS);
 
   for(int i = 0; i < val; i++){
@@ -111,13 +116,5 @@ void loop() {
     FastLED.show();
 
   }
-
-  float avg_current = duty_cycle * (total_c / (t_on/(duration * 2)));
-  Serial.print("C");
-  Serial.println(avg_current, 5);
-
-  float inst_power = avg_current * avg_voltage;
-  Serial.print("P");
-  Serial.println(inst_power, 5);
 
 }
