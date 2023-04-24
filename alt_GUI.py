@@ -67,7 +67,7 @@ class displayApp(tk.Tk):
         # __init__ function for class Tk
         tk.Tk.__init__(self, *args, **kwargs)
         
-        self.geometry('720x720')
+        self.geometry('1000x9000')
        
         # creating container
         container = tk.Frame(self)
@@ -97,10 +97,10 @@ class displayApp(tk.Tk):
     # Start Page setup
     
 class graph(tk.Canvas):
-    def __init__(self, parent, x_coord=1, y_coord=1, height=1, width=1, title='', ylabel='', xlabel='', label='', ylim=1, color='c',**kwargs):
+    def __init__(self, parent, x_coord=1, y_coord=1, title='', ylabel='', xlabel='', label='', ylim=1, color='c',**kwargs):
         tk.Canvas.__init__(self, parent, **kwargs)
         self.data = []
-        fig = Figure(dpi=100)
+        fig = Figure(figsize=(11,7.5),dpi=50)
         self.plot = fig.add_subplot(1,1,1)
         self.plot.set_title(title)
         self.plot.set_ylabel(ylabel)
@@ -110,8 +110,7 @@ class graph(tk.Canvas):
         self.plot.legend(loc='upper left')
         
         self.canvas = FigureCanvasTkAgg(fig, self)
-        self.canvas.draw()
-        #self.canvas.get_tk_widget().place(x=x_coord, y=y_coord, width=width, height=height)
+        #self.canvas.get_tk_widget().place(x=x_coord, y=y_coord, width=50, height=50)
         self.canvas.get_tk_widget().pack()
         
         ani = animation.FuncAnimation(fig, self.update_graph, interval = 200, frames = 100, repeat = False)
@@ -134,12 +133,19 @@ class Graph(tk.Frame):
         super(Graph, self).__init__(parent)
 
         # For the current graph
-        current_canvas = graph(self, x_coord = 10, y_coord = -350, width = 400, height = 450, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 40, color='c')
+        current_canvas = graph(self, x_coord = 10, y_coord = 0, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 40, color='c')
+        current_canvas.place(x=10, y=50)
+        #current_canvas.pack(expand=True, side=tk.LEFT)
+        
         # For the voltage graph
-        voltage_canvas = graph(self, x_coord = 410, y_coord = -350, width = 500, height = 450, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 500, color='g')
-
-        power_canvas = graph(self, x_coord = 960, y_coord = -350, width = 400, height = 450, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 6000, color='b')
-    
+        voltage_canvas = graph(self, x_coord = 410, y_coord = 0, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 500, color='g')
+        voltage_canvas.place(x=10, y=450)
+        #voltage_canvas.pack(expand=True, side=tk.TOP)
+        
+        # For the power graph
+        power_canvas = graph(self, x_coord = 910, y_coord = 0, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 6000, color='b')
+        power_canvas.place(x=600, y=50)
+        #power_canvas.pack(expand=True, side=tk.LEFT)
 
         def get_data():
             ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
@@ -156,8 +162,6 @@ class Graph(tk.Frame):
         t.daemon = True
         t.start()  
         
-        
-        label = ttk.Label(self, text = "Graph", font = LARGEFONT).pack()
         
         button2 = ttk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
         
