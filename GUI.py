@@ -1,9 +1,5 @@
 import tkinter as tk
 import matplotlib
-import urllib
-import json
-import random
-import time
 from tkinter import ttk
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -13,115 +9,17 @@ from matplotlib import style
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
 import serial
-import numpy as np
-import sys
+import time
 from matplotlib import style
-from collections import deque
-import upload # script that uploads code to the arduino
-
-upload
+import threading
+import upload_blank
+import upload_comp # script that uploads code to the arduino
+#upload_blank
+upload_comp
 
 LARGEFONT = ("Verdana", 35)
 style.use('fivethirtyeight')
-ser = serial.Serial('/dev/cu.usbmodem1301', 9600, timeout=1) # Establish the connection to the port used to sense current
-
-qC = deque(maxlen = 200) #queue data structure
-qV = deque(maxlen = 200)
-qP = deque(maxlen = 200)
-qxc = deque(maxlen = 200)
-qxv = deque(maxlen = 200)
-qxp = deque(maxlen = 200)
-tempc = 0 # temporary variable for current
-xc = [] # x-axis for current
-yc = [] # y-axis for current
-current = 0
-
-tempv = 0 # temporary variable for voltage
-xv = [] # x-axis for voltage
-yv = [] # y-axis for voltage
-voltage = 0
-
-tempp = 0
-xp = []
-yp = []
-power = 0
-
-i = 0  # counter
-fig1 = Figure(dpi=50)
-fig2 = Figure(dpi=50)
-fig3 = Figure(dpi=50)
-ac = fig1.add_subplot(1,1,1)
-av = fig2.add_subplot(1,1,1)
-ap = fig3.add_subplot(1,1,1)
-
-fc = Figure(dpi=50)
-f_ac = fc.add_subplot(1,1,1)
-
-
-def animate(i):
-    line = ser.readline()
-    
-    if start:
-        if line:
-            string = line.decode()
-            stripped_string = string.strip()
-            if len(stripped_string) > 0:
-                if stripped_string[0] == 'C':
-                    try:
-                        current = float(stripped_string[1:])
-                        if current < 0:
-                            current = 0
-                    except ValueError:
-                        current = tempc
-                    qxc.append(i)
-                    xc.append(i)
-                
-                    qC.append(current)
-                    yc.append(current)
-                
-                    tempc = current
-                    #i += 0.2
-                    ac.clear()
-                    ac.plot(qxc, qC)
-                    ac.set_xlabel('Time (s)', fontsize=25)
-                    ac.set_ylabel('Current (A)', fontsize=25)
-                    ac.set_title('Current Plot', fontsize=30)
-                if stripped_string[0] == 'V':
-                    try:
-                        voltage = float(stripped_string[1:])
-                        if voltage < 10:
-                            voltage = 0
-                    except ValueError:
-                        voltage = tempv
-                    qxv.append(i)
-                    xv.append(i)
-                    qV.append(voltage)
-                    yv.append(voltage)
-                    tempv = voltage
-                    #i += 0.2
-                    av.clear()
-                    av.plot(qxv, qV)
-                    av.set_xlabel('Time (s)', fontsize=25)
-                    av.set_ylabel('Voltage (V)', fontsize=25)
-                    av.set_title('Voltage Plot', fontsize=30)
-                if stripped_string[0] == 'P':
-                    try:
-                        power = float(stripped_string[1:])
-                        if power < 10:
-                            power = 0
-                    except ValueError:
-                        power = tempp
-                    qxp.append(i)
-                    xp.append(i)
-                    qP.append(power)
-                    yp.append(power)
-                    tempp = power
-                    #i += 0.2
-                    ap.clear()
-                    ap.plot(qxp, qP)
-                    ap.set_xlabel('Time (s)', fontsize=25)
-                    ap.set_ylabel('Power (P)', fontsize=25)
-                    ap.set_title('Power Plot', fontsize=30)
+        
                 
 
 class displayApp(tk.Tk):
@@ -132,7 +30,7 @@ class displayApp(tk.Tk):
         # __init__ function for class Tk
         tk.Tk.__init__(self, *args, **kwargs)
         
-        self.attributes('-fullscreen', True)
+        self.geometry('1000x9000')
        
         # creating container
         container = tk.Frame(self)
@@ -145,14 +43,14 @@ class displayApp(tk.Tk):
         self.frames = {}
        
         # iterate through a tuple with different pages
-        for F in (Graph, Final):
+        for F in (GraphPage, Final):
            
             frame = F(container, self)
            
             # initialising frame of object
             self.frames[F] = frame
             frame.grid(row = 0, column = 0, sticky = "nsew")
-        self.show_frame(Graph)
+        self.show_frame(GraphPage)
    
     # to display the current frame
     def show_frame(self, cont):
@@ -160,76 +58,118 @@ class displayApp(tk.Tk):
         frame.tkraise()
    
     # Start Page setup
-           
+    
+class graph(tk.Canvas):
+    def __init__(self, parent, x_coord=1, y_coord=1, title='', ylabel='', xlabel='', label='', ylim=1, color='c',**kwargs):
+        tk.Canvas.__init__(self, parent, **kwargs)
+        self.data = []
+        fig = Figure(figsize=(11,7.5),dpi=50)
+        self.plot = fig.add_subplot(1,1,1)
+        self.plot.set_title(title)
+        self.plot.set_ylabel(ylabel)
+        self.plot.set_xlabel(xlabel)
+        self.plot.set_ylim(0, ylim)
+        self.line, = self.plot.plot([], [], color, marker = ',',label = label)
+        self.plot.legend(loc='upper left')
+        
+        self.canvas = FigureCanvasTkAgg(fig, self)
+        #self.canvas.get_tk_widget().place(x=x_coord, y=y_coord, width=50, height=50)
+        self.canvas.get_tk_widget().pack()
+        
+        ani = animation.FuncAnimation(fig, self.update_graph, interval = 200, frames = 200, repeat = False)
+        self.canvas.draw()
+        
+    def update_graph(self, i):
+        if self.data:
+            self.line.set_data(range(len(self.data)), self.data)
+            self.plot.set_xlim(0, len(self.data))
+            
+    def set(self, value):
+        self.data.append(value)
+        #self.label_data.config(text=value)
+        
+class EnergyLabel(tk.Label):
+    def __init__(self, parent, **kwargs):
+        tk.Label.__init__(self, parent, **kwargs)
+        self.label_energy = tk.Label(self, font='Verdana 20')
+        self.label_energy.pack()
+    
+    def setE(self, value):
+        self.label_energy.config(text=value)
 
-class Graph(tk.Frame):
+     
+
+class GraphPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        super(GraphPage, self).__init__(parent)
 
         # For the current graph
-        canvas_1 = FigureCanvasTkAgg(fig1, self)
-        canvas_1.draw()
-        canvas_1.get_tk_widget().place(x=10, y=-350, width=400, height=450)
-       
-        #toolbar1 = NavigationToolbar2Tk(canvas_1, self)
-        #toolbar1.update()
-        canvas_1._tkcanvas.place(x=10, y=80, width=400)
-
-   
-        # For the voltage graph
-        canvas_2 = FigureCanvasTkAgg(fig2, self)
-        canvas_2.draw()
-        canvas_2.get_tk_widget().place(x=410, y=-350, width=500, height=450)
+        current_canvas = graph(self, x_coord = 10, y_coord = 0, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 40, color='c')
+        current_canvas.place(x=10, y=50)
+        #current_canvas.pack(expand=True, side=tk.LEFT)
         
-        #toolbar2 = NavigationToolbar2Tk(canvas_2, self)
-        #toolbar2.update()
-        canvas_2._tkcanvas.place(x=460, y=80, width=500)
+        # For the voltage graph
+        voltage_canvas = graph(self, x_coord = 410, y_coord = 0, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 500, color='g')
+        voltage_canvas.place(x=10, y=450)
+        #voltage_canvas.pack(expand=True, side=tk.TOP)
         
         # For the power graph
-        canvas_3 = FigureCanvasTkAgg(fig3, self)
-        canvas_3.draw()
-        canvas_3.get_tk_widget().place(x=10, y=-350, width=400, height=450)
+        power_canvas = graph(self, x_coord = 910, y_coord = 0, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 6000, color='b')
+        power_canvas.place(x=600, y=50)
+        #power_canvas.pack(expand=True, side=tk.LEFT)
         
-        #toolbar3 = NavigationToolbar2Tk(canvas_3, self)
-        #toolbar3.update()
-        canvas_3._tkcanvas.place(x=990, y=80, width=400)
+        energy = EnergyLabel(self)
+        energy.place(x=1300, y=600)
+        
+        def timer(seconds):
+            
+            seconds = seconds - 1
+            timer_label.config(text=seconds)
+            timer_label.after(1000, timer)
+        
+        def update():
+            timer_label.config(text='New Text')
+        
+        timer_label = tk.Label(self, text='Old Text')
+        timer_label.place(x=1300, y=400)
         
         
         
-        label = ttk.Label(self, text = "Graph", font = LARGEFONT).pack()
+
+        def get_data():
+            ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
+            while True:
+                pulldata = ser.readline()
+                string = pulldata.decode()
+                stripped_string = string.strip()
+                get_data = stripped_string.split(',')
+                current_canvas.set(float(get_data[0])) #current
+                voltage_canvas.set(float(get_data[1])) #voltage
+                power_canvas.set(float(get_data[2])) #power 
+                energy.setE(int(round(float(get_data[3])))) #energy
+                
+                
+                
+        
+        t = threading.Thread(target=get_data)
+        t.daemon = True
+        t.start()
+        
+        t_timer = threading.Thread(target=timer(10))
+        t_timer.daemon = True
+        t_timer.start()
+        
+       #button1 = ttk.Button(self, text="Clear", command=self.destroy()).place(x=1300, y=600) 
+        
         
         button2 = ttk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
-        
-        button3 = ttk.Button(self, text="Start", command = start_animation).pack()
-        
-        button4 = ttk.Button(self, text="Next", command = lambda : controller.show_frame(Final)).place(x=1300, y=700)
         
 class Final(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         
-        button = ttk.Button(self, text="Plot", command = plot).pack()
-        
-        
-        canvas = FigureCanvasTkAgg(fc, self)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        
-        
-        
-start = False
-def start_animation():
-    global start
-    start ^= True
-    i = 0
-    frames = 0
-
-def plot():
-    f_ac.plot(xc, yc)        
+    
 # Driver code
 app = displayApp()
-ani1 = animation.FuncAnimation(fig1, animate, interval=200, frames = 60, repeat = False, blit = False)
-ani2 = animation.FuncAnimation(fig2, animate, interval=200, frames = 60, repeat = False, blit = False)
-ani3 = animation.FuncAnimation(fig3, animate, interval=200, frames = 60, repeat = False, blit = False)
 app.mainloop()
