@@ -9,11 +9,13 @@
 #define NUM_LEDS 60
 CRGB leds[NUM_LEDS];
 
-int sampling_period  = 200;
-float duty_cycle  = 1;
+float sampling_period  = 200;
+float duty_cycle  = 0.8;
 int duration  = 5;
 float t_on = duty_cycle * sampling_period;
 float t_off = sampling_period - t_on;
+
+float cum_energy = 0; // cumulative energy
 
 float SampleCurrent(int duration) {
   int adc_value = 0;
@@ -107,7 +109,10 @@ void loop() {
   float inst_power = avg_current * avg_voltage;
   //Serial.print("P");
   //Serial.println(inst_power, 5);
-  Serial.print(avg_current, 5); Serial.print(","); Serial.print(avg_voltage, 5); Serial.print(","); Serial.print(inst_power, 5); Serial.println("");
+
+  Serial.print(avg_current, 5); Serial.print(","); Serial.print(avg_voltage, 5); Serial.print(","); Serial.print(inst_power, 5);
+  Serial.print(","); Serial.print(cum_energy, 5); Serial.println("");
+
   int val = map(avg_voltage, 0, 150, 0, NUM_LEDS);
 
   for(int i = 0; i < val; i++){
@@ -116,5 +121,13 @@ void loop() {
     FastLED.show();
 
   }
+  
+
+  delay(t_off);
+
+  float energy = inst_power * ((float)sampling_period/1000);
+  cum_energy = cum_energy + energy;
+  Serial.print(avg_current, 2); Serial.print(","); Serial.print(avg_voltage, 2); Serial.print(","); Serial.print(inst_power, 2);
+  Serial.print(","); Serial.print(cum_energy, 2); Serial.println("");
 
 }
