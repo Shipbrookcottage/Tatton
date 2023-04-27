@@ -43,7 +43,7 @@ class displayApp(tk.Tk):
         self.frames = {}
        
         # iterate through a tuple with different pages
-        for F in (GraphPage, Final):
+        for F in (GraphPage, Grid):
            
             frame = F(container, self)
            
@@ -97,7 +97,14 @@ class EnergyLabel(tk.Label):
     def setE(self, value):
         self.label_energy.config(text=value)
 
-     
+class Label_Frame(tk.LabelFrame) :
+    def __init__(self, parent, title = '', value = 1, **kwargs):
+        tk.LabelFrame.__init__(self, parent, **kwargs)
+        self.frame = tk.LabelFrame(self, text = title)
+        self.frame.pack()
+        self.text = tk.Label(self.frame, text = value)
+        self.text.pack()
+          
 
 class GraphPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -160,14 +167,22 @@ class GraphPage(tk.Frame):
         t_timer.daemon = True
         t_timer.start()
         
-       #button1 = ttk.Button(self, text="Clear", command=self.destroy()).place(x=1300, y=600) 
+        button1 = ttk.Button(self, text="Change", command=lambda: controller.show_frame(Grid)).place(x=1300, y=700) 
         
         
         button2 = ttk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
         
-class Final(tk.Frame):
+class Grid(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+    
+        Wind = tk.LabelFrame(self, text = 'Wind Generation (W)').pack()
+        Wind_p = tk.Label(Wind, text = '10.4 W').pack()
+        
+        Solar = tk.LabelFrame(self, text = 'Solar Generation').pack()
+        Solar_p = tk.Label(Solar, text = '7.4 W').pack()
+        
+        
         
     
 # Driver code
