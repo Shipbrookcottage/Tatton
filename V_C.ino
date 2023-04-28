@@ -1,5 +1,4 @@
-// This is code the will sense ac current and voltage around a PWM period of 200ms
-// with LED strip integrated
+// This is the code for the competition mode as of 26/4/2023
 #include <FastLED.h>
 
 #define Current_In_Pin A0
@@ -113,7 +112,7 @@ void loop() {
   Serial.print(avg_current, 5); Serial.print(","); Serial.print(avg_voltage, 5); Serial.print(","); Serial.print(inst_power, 5);
   Serial.print(","); Serial.print(cum_energy, 5); Serial.println("");
 
-  int val = map(avg_voltage, 0, 150, 0, NUM_LEDS);
+  int val = map(avg_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
 
   for(int i = 0; i < val; i++){
 
