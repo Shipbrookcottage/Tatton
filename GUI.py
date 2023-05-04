@@ -30,7 +30,7 @@ class displayApp(tk.Tk):
         # __init__ function for class Tk
         tk.Tk.__init__(self, *args, **kwargs)
         
-        self.geometry('1000x9000')
+        self.geometry('10000x9000')
        
         # creating container
         container = tk.Frame(self)
@@ -60,7 +60,7 @@ class displayApp(tk.Tk):
     # Start Page setup
     
 class graph(tk.Canvas):
-    def __init__(self, parent, x_coord=1, y_coord=1, title='', ylabel='', xlabel='', label='', ylim=1, color='c',**kwargs):
+    def __init__(self, parent, title = '', ylabel = '', xlabel = '', label = '', ylim = 1, color = 'c',**kwargs):
         tk.Canvas.__init__(self, parent, **kwargs)
         self.data = []
         fig = Figure(figsize=(11,7.5),dpi=50)
@@ -73,7 +73,6 @@ class graph(tk.Canvas):
         self.plot.legend(loc='upper left')
         
         self.canvas = FigureCanvasTkAgg(fig, self)
-        #self.canvas.get_tk_widget().place(x=x_coord, y=y_coord, width=50, height=50)
         self.canvas.get_tk_widget().pack()
         
         ani = animation.FuncAnimation(fig, self.update_graph, interval = 200, frames = 200, repeat = False)
@@ -112,22 +111,24 @@ class GraphPage(tk.Frame):
         super(GraphPage, self).__init__(parent)
 
         # For the current graph
-        current_canvas = graph(self, x_coord = 10, y_coord = 0, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 40, color='c')
+        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 40, color='c')
         current_canvas.place(x=10, y=50)
         #current_canvas.pack(expand=True, side=tk.LEFT)
         
         # For the voltage graph
-        voltage_canvas = graph(self, x_coord = 410, y_coord = 0, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 500, color='g')
+        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 500, color='g')
         voltage_canvas.place(x=10, y=450)
         #voltage_canvas.pack(expand=True, side=tk.TOP)
         
         # For the power graph
-        power_canvas = graph(self, x_coord = 910, y_coord = 0, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 6000, color='b')
+        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 6000, color='b')
         power_canvas.place(x=600, y=50)
         #power_canvas.pack(expand=True, side=tk.LEFT)
         
-        energy = EnergyLabel(self)
-        energy.place(x=1300, y=600)
+        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height= 100, width=150).place(x=1000, y=600)
+        
+        energy = EnergyLabel(energy_frame)
+        energy.place(x=1040, y=630)         # energy_frames x+40 and y+30 from trial and error
         
         def timer(seconds):
             
@@ -138,8 +139,10 @@ class GraphPage(tk.Frame):
         def update():
             timer_label.config(text='New Text')
         
-        timer_label = tk.Label(self, text='Old Text')
-        timer_label.place(x=1300, y=400)
+        timer_frame = tk.LabelFrame(self, text='Remaining Time (s)', height = 100, width = 140).place(x=800, y=600)
+        
+        timer_label = tk.Label(timer_frame, text='Old Text', font='Verdana 20')
+        timer_label.place(x=860, y=630)         # timer_framee x+60 and y+30 from trial and error
         
         
         
@@ -168,19 +171,19 @@ class GraphPage(tk.Frame):
         t_timer.start()
         
         button1 = ttk.Button(self, text="Change", command=lambda: controller.show_frame(Grid)).place(x=1300, y=700) 
-        
-        
+                
         button2 = ttk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
+
         
 class Grid(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
     
-        Wind = tk.LabelFrame(self, text = 'Wind Generation (W)').pack()
-        Wind_p = tk.Label(Wind, text = '10.4 W').pack()
+       # Wind = tk.LabelFrame(self, text = 'Wind Generation (W)').pack()
+       # Wind_p = tk.Label(Wind, text = '10.4 W').pack()
         
-        Solar = tk.LabelFrame(self, text = 'Solar Generation').pack()
-        Solar_p = tk.Label(Solar, text = '7.4 W').pack()
+       # Solar = tk.LabelFrame(self, text = 'Solar Generation').pack()
+       # Solar_p = tk.Label(Solar, text = '7.4 W').pack()
         
         
         
