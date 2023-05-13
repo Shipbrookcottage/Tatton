@@ -15,7 +15,7 @@ import threading
 import upload_blank
 import upload_comp # script that uploads code to the arduino
 #upload_blank
-upload_comp
+upload_comp # upload competetive mode sketch to arduino
 
 LARGEFONT = ("Verdana", 35)
 style.use('fivethirtyeight')
@@ -56,9 +56,8 @@ class displayApp(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
-   
-    # Start Page setup
-    
+        
+# general class for drawing graphs on the GUI 
 class graph(tk.Canvas):
     def __init__(self, parent, title = '', ylabel = '', xlabel = '', label = '', ylim = 1, color = 'c',**kwargs):
         tk.Canvas.__init__(self, parent, **kwargs)
@@ -130,7 +129,7 @@ class GraphPage(tk.Frame):
         energy = EnergyLabel(energy_frame)
         energy.place(x=1040, y=630)         # energy_frames x+40 and y+30 from trial and error
         
-        def timer(seconds):
+        def timer(seconds): # timer, not yet functional
             
             seconds = seconds - 1
             timer_label.config(text=seconds)
@@ -147,7 +146,7 @@ class GraphPage(tk.Frame):
         
         
 
-        def get_data():
+        def get_data(): # get data from Arduino
             ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
             while True:
                 pulldata = ser.readline()
@@ -162,11 +161,11 @@ class GraphPage(tk.Frame):
                 
                 
         
-        t = threading.Thread(target=get_data)
+        t = threading.Thread(target=get_data)        # thread that is responsible for drawing graphs
         t.daemon = True
         t.start()
         
-        t_timer = threading.Thread(target=timer(10))
+        t_timer = threading.Thread(target=timer(10)) # thread that is responsible for the timer
         t_timer.daemon = True
         t_timer.start()
         
