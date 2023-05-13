@@ -1,12 +1,13 @@
+// Code to sense speed of the cyclist and light up LEDs based on the speed threshold
+
 #define Digital_In_Pin 2
-int hall_sensor = 0;
+
 unsigned long t1 = 0; // previous time value
 unsigned long t2 = 0; // new time value
-float frequency = 0;
 bool flag = LOW;
 const int Led[3] = {3,4,5};
 
-void freq(unsigned long t1, unsigned long t2){
+void freq(unsigned long t1, unsigned long t2){  // function that calculates the frequency
   float frequency = 1000/((float)t2-(float)t1); //milliseconds
   Serial.println(frequency);
   if(frequency < 4) {
@@ -15,16 +16,16 @@ void freq(unsigned long t1, unsigned long t2){
   else {
     digitalWrite(Led[0],LOW);
   }
-  if(frequency > 4 && frequency < 10) {
+  if(frequency > 4 && frequency < 10) { // light up LED to indicate the user is at the correct speed
     digitalWrite(Led[1],HIGH);
   }
   else {
     digitalWrite(Led[1],LOW);
   }
-  if(frequency > 10){
+  if(frequency > 10){                 // light up LED to indicate the user is going too fast
     digitalWrite(Led[2],HIGH);
   }
-  else {
+  else {                              // light up LED to indicate the user is going too slow
     digitalWrite(Led[2],LOW);
   }
 }
@@ -38,7 +39,7 @@ void setup() {
     pinMode(Led[i],OUTPUT); // sets LEDs to output
   }  
 }
-void frequency_func() {
+void frequency_func() {               // function that takes the time when the interrupt is triggered
   if(flag == LOW){
     t1 = millis();
     flag = HIGH;
@@ -53,6 +54,4 @@ void frequency_func() {
 }
 
 void loop() {
-  hall_sensor = digitalRead(2);
-  //Serial.println(hall_sensor);
   }
