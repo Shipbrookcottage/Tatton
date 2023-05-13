@@ -1,6 +1,8 @@
 // This is the code for the competition mode as of 26/4/2023
 #include <FastLED.h>
 
+// Initialise pins 
+
 #define Current_In_Pin A0
 #define Voltage_In_Pin A1
 #define PWM_Pin 2
@@ -81,52 +83,43 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   FastLED.clear();
-  float total_v = 0; // variable to store the running total for voltage for the duty cycle
-  float total_c = 0; //
-  digitalWrite(PWM_Pin, HIGH);
+  float total_v = 0; // variable to store the running total for voltage for the cycle
+  float total_c = 0; // variable to store the running total for voltage for the cycle
+  digitalWrite(PWM_Pin, HIGH); // set the MOSFET high
 
-  float starttime = millis();
+  float starttime = millis(); // Initialise timer
   float endtime = starttime;
 
   while((endtime - starttime) <= t_on){ // sample current and voltage whilst duty cycle is high
-    total_c += SampleCurrent(duration);
+    total_c += SampleCurrent(duration); // Sample for 5ms
     total_v += SampleVoltage(duration);
     endtime = millis();
     // this loop takes 10ms
   }
 
-  digitalWrite(PWM_Pin, LOW);
+  digitalWrite(PWM_Pin, LOW); // Set MOSFET low at the end of the on period.
 
-  float avg_current = duty_cycle * (total_c / (t_on/(duration * 2)));
-  //Serial.print("C");
-  //Serial.println(avg_current, 5);
+  float avg_current = duty_cycle * (total_c / (t_on/(duration * 2))); // calculate average current based on duty cycle
 
-  float avg_voltage = duty_cycle * (total_v / (t_on/(duration * 2)));
-  //Serial.print("V");
-  //Serial.println(avg_voltage, 5); // send voltage to python averaged over the 200 ms period
+  float avg_voltage = duty_cycle * (total_v / (t_on/(duration * 2))); // calculate average voltage based on duty cycle
 
-  float inst_power = avg_current * avg_voltage;
-  //Serial.print("P");
-  //Serial.println(inst_power, 5);
-
-  Serial.print(avg_current, 5); Serial.print(","); Serial.print(avg_voltage, 5); Serial.print(","); Serial.print(inst_power, 5);
-  Serial.print(","); Serial.print(cum_energy, 5); Serial.println("");
+  float inst_power = avg_current * avg_voltage; // calculate power produced in the total cycle period
 
   int val = map(avg_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
 
   for(int i = 0; i < val; i++){
 
     leds[i] = CRGB::Blue;
-    FastLED.show();
+    FastLED.show(); // Turn on the number of LEDs corresponding to the mapped voltage values
 
   }
   
 
-  delay(t_off);
+  delay(t_off); // Keep the MOSFET low for t_off
 
   float energy = inst_power * ((float)sampling_period/1000);
   cum_energy = cum_energy + energy;
   Serial.print(avg_current, 2); Serial.print(","); Serial.print(avg_voltage, 2); Serial.print(","); Serial.print(inst_power, 2);
-  Serial.print(","); Serial.print(cum_energy, 2); Serial.println("");
+  Serial.print(","); Serial.print(cum_energy, 2); Serial.println(""); // send data to the PC using serial.print
 
 }
