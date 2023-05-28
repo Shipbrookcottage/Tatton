@@ -1,4 +1,5 @@
 // This is the code for the competition mode as of 26/4/2023
+// This code sends voltage, current, energy and power
 #include <FastLED.h>
 
 // Initialise pins 
