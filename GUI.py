@@ -53,7 +53,7 @@ class GUI(tk.Tk):
         self.frames = {}
        
         # iterate through a tuple with different pages
-        for F in (Home, CompMode,GraphPage, Grid):
+        for F in (Home, CompMode,GraphPage, Leaderboard, Grid):
            
             frame = F(container, self)
            
@@ -215,11 +215,10 @@ class GraphPage(tk.Frame):
         
         def deletetext():
             energy.destroy()
-            controller.show_frame(Grid)
+            controller.show_frame(Leaderboard)
         
         def write_csv(file, data_row):
             with open(file, 'a', newline='') as csv_file:
-                csv_file.write('\n')
                 write = csv.writer(csv_file)
                 write.writerow(data_row)
         
@@ -229,11 +228,43 @@ class GraphPage(tk.Frame):
         button2 = tk.Button(self, text="Next", command = deletetext).place(x=1300, y=750)
         
         button3 = tk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
+        
+class Leaderboard(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        super(Leaderboard, self).__init__(parent)
+        
+        leaderboard_data = []
+      
+        leaderboard = tk.Listbox(self, width = 40, height = 10)
+        leaderboard.pack()    
+           
+        def update_board():
+            with open(filepath, 'r') as file:
+                reader = csv.reader(file)
+                for i in reader:
+                    if i != '':
+                        if i[3] == str(date.today()):
+                            leaderboard_data.append(i)
+            leaderboard_data.sort(key = lambda max_p: max_p[1], reverse = True)
+        
+            for row in leaderboard_data:
+                leaderboard.insert(tk.END, f"{row[0]} - Maximum Power: {row[1]}")
+            leaderboard.update()
+        
+        t_lb = threading.Thread(target=update_board)
+        
+        def up_lb():
+            t_lb.start()
+             
+        update_leaderboard = tk.Button(self, text = 'Update', command = up_lb).pack()
+    
 
 # Need to write arduino code for Grid model mode first!!!!
 class Grid(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        super(Grid, self).__init__(parent)
     
        # Wind = tk.LabelFrame(self, text = 'Wind Generation (W)').pack()
        # Wind_p = tk.Label(Wind, text = '10.4 W').pack()
