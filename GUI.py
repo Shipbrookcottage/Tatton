@@ -1,6 +1,7 @@
 import tkinter as tk
+import tkinter.messagebox
+from tkdial import Meter
 import matplotlib
-from tkinter import ttk
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -10,19 +11,26 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 import serial
 import time
+import os
 from matplotlib import style
 import threading
+import csv
+from datetime import date
+
 import upload_blank
-import upload_comp # script that uploads code to the arduino
-#upload_blank
-upload_comp # upload competetive mode sketch to arduino
+
+global filepath
+filepath = 'data.csv'
+
+def pause():
+    os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Blank -u -p /dev/cu.usbmodem1301')
 
 LARGEFONT = ("Verdana", 35)
 style.use('fivethirtyeight')
         
                 
 
-class displayApp(tk.Tk):
+class GUI(tk.Tk):
     """ class to set up GUI """
     # __init__ function for class in displayApp
     def __init__(self, *args, **kwargs):
@@ -31,6 +39,8 @@ class displayApp(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         
         self.geometry('10000x9000')
+        
+        self.title('Demo')
        
         # creating container
         container = tk.Frame(self)
@@ -43,21 +53,22 @@ class displayApp(tk.Tk):
         self.frames = {}
        
         # iterate through a tuple with different pages
-        for F in (GraphPage, Grid):
+        for F in (Home, CompMode,GraphPage, Grid):
            
             frame = F(container, self)
            
             # initialising frame of object
             self.frames[F] = frame
             frame.grid(row = 0, column = 0, sticky = "nsew")
-        self.show_frame(GraphPage)
+        self.show_frame(Home)
    
     # to display the current frame
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
-        
-# general class for drawing graphs on the GUI 
+   
+    # Start Page setup
+    
 class graph(tk.Canvas):
     def __init__(self, parent, title = '', ylabel = '', xlabel = '', label = '', ylim = 1, color = 'c',**kwargs):
         tk.Canvas.__init__(self, parent, **kwargs)
@@ -69,7 +80,7 @@ class graph(tk.Canvas):
         self.plot.set_xlabel(xlabel)
         self.plot.set_ylim(0, ylim)
         self.line, = self.plot.plot([], [], color, marker = ',',label = label)
-        self.plot.legend(loc='upper left')
+        self.plot.legend(loc='upper left') 
         
         self.canvas = FigureCanvasTkAgg(fig, self)
         self.canvas.get_tk_widget().pack()
@@ -94,6 +105,7 @@ class EnergyLabel(tk.Label):
     
     def setE(self, value):
         self.label_energy.config(text=value)
+        
 
 class Label_Frame(tk.LabelFrame) :
     def __init__(self, parent, title = '', value = 1, **kwargs):
@@ -102,6 +114,36 @@ class Label_Frame(tk.LabelFrame) :
         self.frame.pack()
         self.text = tk.Label(self.frame, text = value)
         self.text.pack()
+        
+class Home(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        super(Home,  self).__init__(parent)
+        
+        welcome = tk.Label(self, text='Welcome!', font ='Verdana 30').pack()
+        
+        button = tk.Button(self, text='Competition Mode', command= lambda : controller.show_frame(CompMode)).pack()
+        
+        button2 = tk.Button(self, text='Grid Mode', command= lambda : controller.show_frame(Grid)).pack()
+        
+class CompMode(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        super(CompMode,  self).__init__(parent)
+        
+        welcome = tk.Label(self, text='Welcome to the Competition Mode!', font ='Verdana 30').pack() 
+        usernameLabel = tk.Label(self, text="User Name").pack()
+        global username
+        username = tk.StringVar()
+        usernameEntry = tk.Entry(self, textvariable=username).pack()
+        
+        def onClick():
+            tkinter.messagebox.showinfo('Demo', 'Username Saved!')
+            
+        button = tk.Button(self, text='Enter', command = onClick).pack()
+        button2 = tk.Button(self, text = 'Start Competition Mode', command  = lambda : controller.show_frame(GraphPage)).pack()
+           
+        
           
 
 class GraphPage(tk.Frame):
@@ -115,12 +157,12 @@ class GraphPage(tk.Frame):
         #current_canvas.pack(expand=True, side=tk.LEFT)
         
         # For the voltage graph
-        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 500, color='g')
+        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 100, color='g')
         voltage_canvas.place(x=10, y=450)
         #voltage_canvas.pack(expand=True, side=tk.TOP)
         
         # For the power graph
-        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 6000, color='b')
+        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 1000, color='b')
         power_canvas.place(x=600, y=50)
         #power_canvas.pack(expand=True, side=tk.LEFT)
         
@@ -129,51 +171,66 @@ class GraphPage(tk.Frame):
         energy = EnergyLabel(energy_frame)
         energy.place(x=1040, y=630)         # energy_frames x+40 and y+30 from trial and error
         
-        def timer(seconds): # timer, not yet functional
-            
-            seconds = seconds - 1
-            timer_label.config(text=seconds)
-            timer_label.after(1000, timer)
+        timer_frame = tk.LabelFrame(self, text='Remaining Time (s)', height = 100, width = 140).place(x=1200, y=100)
         
-        def update():
-            timer_label.config(text='New Text')
+        timer_label = tk.Label(self ,timer_frame, text='Old Text', font='Verdana 20')
+        timer_label.place(x=1260, y=130)         # timer_framee x+60 and y+30 from trial and error
         
-        timer_frame = tk.LabelFrame(self, text='Remaining Time (s)', height = 100, width = 140).place(x=800, y=600)
+        speed = Meter(self, radius=260, start=0, end=30, border_width=0,
+               fg="black", text_color="white", start_angle=270, end_angle=-270,
+               text_font="DS-Digital 30", scale_color="white", needle_color="red")
         
-        timer_label = tk.Label(timer_frame, text='Old Text', font='Verdana 20')
-        timer_label.place(x=860, y=630)         # timer_framee x+60 and y+30 from trial and error
+        speed.place(x=600, y = 500)
         
-        
-        
-
-        def get_data(): # get data from Arduino
+        def get_data():
+            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/V_C -u -p /dev/cu.usbmodem1301')
             ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
+            global max_power
+            global cum_energy # variable to store cumulative energy for the leaderboard
+            max_power = 0
             while True:
-                pulldata = ser.readline()
-                string = pulldata.decode()
-                stripped_string = string.strip()
-                get_data = stripped_string.split(',')
-                current_canvas.set(float(get_data[0])) #current
-                voltage_canvas.set(float(get_data[1])) #voltage
-                power_canvas.set(float(get_data[2])) #power 
-                energy.setE(int(round(float(get_data[3])))) #energy
-                
-                
-                
+                try:
+                    pulldata = ser.readline()
+                    string = pulldata.decode()
+                    stripped_string = string.strip()
+                    get_data = stripped_string.split(',')
+                    current_canvas.set(float(get_data[0])) #current
+                    voltage_canvas.set(float(get_data[1])) #voltage
+                    power_canvas.set(float(get_data[2])) #power 
+                    energy.setE(int(round(float(get_data[3])))) #energy
+                    speed.set(float(get_data[4]))
+                    if(max_power < float(get_data[2])):
+                        max_power = float(get_data[2])
+                    cum_energy = int(round(float(get_data[3])))
+                except ValueError:
+                    pause
+                    data = [username.get(), max_power, cum_energy, date.today()]
+                    write_csv(filepath, data)
+                    break
         
-        t = threading.Thread(target=get_data)        # thread that is responsible for drawing graphs
-        t.daemon = True
-        t.start()
-        
-        t_timer = threading.Thread(target=timer(10)) # thread that is responsible for the timer
-        t_timer.daemon = True
-        t_timer.start()
-        
-        button1 = ttk.Button(self, text="Change", command=lambda: controller.show_frame(Grid)).place(x=1300, y=700) 
+        t = threading.Thread(target=get_data)
                 
-        button2 = ttk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
+        def start():        
+            t.start()
+        
+        def deletetext():
+            energy.destroy()
+            controller.show_frame(Grid)
+        
+        def write_csv(file, data_row):
+            with open(file, 'a', newline='') as csv_file:
+                csv_file.write('\n')
+                write = csv.writer(csv_file)
+                write.writerow(data_row)
+        
+        
+        button1 = tk.Button(self, text="Start", command = start).place(x=1300, y=700)
+        
+        button2 = tk.Button(self, text="Next", command = deletetext).place(x=1300, y=750)
+        
+        button3 = tk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
 
-        
+# Need to write arduino code for Grid model mode first!!!!
 class Grid(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -188,5 +245,6 @@ class Grid(tk.Frame):
         
     
 # Driver code
-app = displayApp()
+app = GUI()
 app.mainloop()
+ 
