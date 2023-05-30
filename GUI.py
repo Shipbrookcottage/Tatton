@@ -73,8 +73,14 @@ class graph(tk.Canvas):
     def __init__(self, parent, title = '', ylabel = '', xlabel = '', label = '', ylim = 1, color = 'c',**kwargs):
         tk.Canvas.__init__(self, parent, **kwargs)
         self.data = []
-        fig = Figure(figsize=(11,7.5),dpi=50)
-        self.plot = fig.add_subplot(1,1,1)
+        self.ylim = ylim
+        self.color = color
+        self.label = label
+        self.title = title
+        self.ylabel = ylabel
+        self.xlabel = xlabel
+        self.fig = Figure(figsize=(11,7.5),dpi=50)
+        self.plot = self.fig.add_subplot(1,1,1)
         self.plot.set_title(title)
         self.plot.set_ylabel(ylabel)
         self.plot.set_xlabel(xlabel)
@@ -82,10 +88,10 @@ class graph(tk.Canvas):
         self.line, = self.plot.plot([], [], color, marker = ',',label = label)
         self.plot.legend(loc='upper left') 
         
-        self.canvas = FigureCanvasTkAgg(fig, self)
+        self.canvas = FigureCanvasTkAgg(self.fig, self)
         self.canvas.get_tk_widget().pack()
         
-        ani = animation.FuncAnimation(fig, self.update_graph, interval = 200, frames = 200, repeat = False)
+        self.ani = animation.FuncAnimation(self.fig, self.update_graph, interval = 200, frames = 200, repeat = False)
         self.canvas.draw()
         
     def update_graph(self, i):
@@ -96,6 +102,22 @@ class graph(tk.Canvas):
     def set(self, value):
         self.data.append(value)
         #self.label_data.config(text=value)
+    
+    def clear(self):
+        self.data = []
+        self.plot.clear()  # Clear the plot
+        self.plot.set_ylim(0, self.ylim)  # Reset the y-axis limits
+        self.plot.set_title(self.title)  # Reapply the title
+        self.plot.set_xlabel(self.xlabel)  # Reapply the xlabel
+        self.plot.set_ylabel(self.ylabel)  # Reapply the ylabel
+        self.line, = self.plot.plot([], [], self.color, marker=',', label=self.line.get_label())
+        self.plot.legend(loc='upper left')
+        self.canvas.draw()
+        
+        # Stop and restart the animation
+        self.canvas.get_tk_widget().after_cancel(self.ani)
+        self.ani = animation.FuncAnimation(self.fig, self.update_graph, interval=200, frames=200, repeat=False)
+        self.canvas.draw()
         
 class EnergyLabel(tk.Label):
     def __init__(self, parent, **kwargs):
@@ -105,6 +127,12 @@ class EnergyLabel(tk.Label):
     
     def setE(self, value):
         self.label_energy.config(text=value)
+    
+    def show(self):
+        self.place(x=1040, y=630)  
+    
+    def hide(self):
+        self.place_forget()
         
 
 class Label_Frame(tk.LabelFrame) :
@@ -207,20 +235,29 @@ class GraphPage(tk.Frame):
                     data = [username.get(), max_power, cum_energy, date.today()]
                     write_csv(filepath, data)
                     break
-        
-        t = threading.Thread(target=get_data)
                 
-        def start():        
+        def start():  
+            speed.set(0)
+            energy.setE(0)
+            energy.show()
+            t = threading.Thread(target=get_data)      
             t.start()
         
         def deletetext():
-            energy.destroy()
+            clear_graphs()
+            energy.hide()
+            pause
             controller.show_frame(Leaderboard)
         
         def write_csv(file, data_row):
             with open(file, 'a', newline='') as csv_file:
                 write = csv.writer(csv_file)
                 write.writerow(data_row)
+        
+        def clear_graphs():
+            current_canvas.clear()
+            voltage_canvas.clear()
+            power_canvas.clear()
         
         
         button1 = tk.Button(self, text="Start", command = start).place(x=1300, y=700)
@@ -240,6 +277,8 @@ class Leaderboard(tk.Frame):
         leaderboard.pack()    
            
         def update_board():
+            leaderboard.delete(0, tk.END)
+            leaderboard_data.clear()
             with open(filepath, 'r') as file:
                 reader = csv.reader(file)
                 for i in reader:
@@ -248,17 +287,19 @@ class Leaderboard(tk.Frame):
                             leaderboard_data.append(i)
             leaderboard_data.sort(key = lambda max_p: max_p[1], reverse = True)
         
-            for row in leaderboard_data:
-                leaderboard.insert(tk.END, f"{row[0]} - Maximum Power: {row[1]}")
+            for rank, row in enumerate(leaderboard_data, start=1):
+                leaderboard.insert(tk.END, f"{rank}. {row[0]} - Maximum Power: {row[1]}")
             leaderboard.update()
         
-        t_lb = threading.Thread(target=update_board)
         
         def up_lb():
+            t_lb = threading.Thread(target=update_board)
             t_lb.start()
              
         update_leaderboard = tk.Button(self, text = 'Update', command = up_lb).pack()
-    
+        back_to_comp = tk.Button(self, text = 'Competition Mode', command = lambda : controller.show_frame(CompMode)).pack()
+        button3 = tk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
+        jelly = tk.Label(self, text = 'ADD FOOD EQUIVALENT', font = 'Verdana 30').pack()
 
 # Need to write arduino code for Grid model mode first!!!!
 class Grid(tk.Frame):
