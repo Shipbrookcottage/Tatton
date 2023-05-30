@@ -1,23 +1,29 @@
-// This is the code for the competition mode as of 26/4/2023
-// This code sends voltage, current, energy and power
+// This is the code for the competition mode as of 28/5/2023
+// This code will use the mapped frequency values to send frequency
 #include <FastLED.h>
 
-// Initialise pins 
-
-#define Current_In_Pin A0
-#define Voltage_In_Pin A1
+#define Current_In_Pin A5
+#define Voltage_In_Pin A0
 #define PWM_Pin 2
 #define LED_PIN 8
 #define NUM_LEDS 60
 CRGB leds[NUM_LEDS];
 
 float sampling_period  = 200;
-float duty_cycle  = 0.8;
+float duty_cycle  = 1;
 int duration  = 5;
 float t_on = duty_cycle * sampling_period;
 float t_off = sampling_period - t_on;
-
+float total_v; // variable to store the running total for voltage for the duty cycle
+float total_c;
 float cum_energy = 0; // cumulative energy
+unsigned long starttime;
+float frequency;
+float avg_current;
+float avg_voltage;
+float inst_power;
+float energy;
+int val;
 
 float SampleCurrent(int duration) {
   int adc_value = 0;
@@ -70,6 +76,52 @@ float SampleVoltage(int duration) {
   return avg_voltage;
 }
 
+void cycle(int runtime){
+  unsigned long stime = millis();
+
+  while((millis() - stime) <= runtime){
+    digitalWrite(PWM_Pin, HIGH);
+    FastLED.clear();
+    total_v = 0; // variable to store the running total for voltage for the duty cycle
+    total_c = 0; //
+
+    starttime = millis();
+
+    while((millis() - starttime) <= t_on){ // sample current and voltage whilst duty cycle is high
+      total_c += SampleCurrent(duration);
+      total_v += SampleVoltage(duration);
+      // this loop takes 10ms
+    }
+
+    digitalWrite(PWM_Pin, LOW);
+
+    avg_current = duty_cycle * (total_c / (t_on/(duration * 2)));
+    if(avg_current < 0){
+      avg_current = -avg_current;
+    }
+
+    avg_voltage = duty_cycle * (total_v / (t_on/(duration * 2)));
+
+    inst_power = avg_current * avg_voltage;
+
+    energy = inst_power * ((float)sampling_period/1000);
+
+    cum_energy = cum_energy + energy;
+
+    frequency = 0.3173*avg_voltage + 0.6604; // Equation for frequency was taken from testing
+
+    val = map(avg_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
+    for(int i = 0; i < val; i++){
+      leds[i] = CRGB::Blue;
+      FastLED.show();
+    }
+
+    Serial.print(avg_current, 2); Serial.print(","); Serial.print(avg_voltage, 2); Serial.print(","); Serial.print(inst_power, 2);
+    Serial.print(","); Serial.print(cum_energy, 2); Serial.print(","); Serial.print(frequency, 1); Serial.print(","); /*Serial.print(remaining, 1)*/;
+    Serial.println("");
+    delay(t_off);
+  }
+}
 void setup() {
   // put your setup code here, to run once:
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
@@ -77,50 +129,12 @@ void setup() {
   digitalWrite(PWM_Pin, HIGH);
 
   Serial.begin(9600);
-  analogReference(EXTERNAL);
+  //analogReference(EXTERNAL);
+  //delay(5000);
+  cycle(10000);
+  Serial.println("Done");
 
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  FastLED.clear();
-  float total_v = 0; // variable to store the running total for voltage for the cycle
-  float total_c = 0; // variable to store the running total for voltage for the cycle
-  digitalWrite(PWM_Pin, HIGH); // set the MOSFET high
-
-  float starttime = millis(); // Initialise timer
-  float endtime = starttime;
-
-  while((endtime - starttime) <= t_on){ // sample current and voltage whilst duty cycle is high
-    total_c += SampleCurrent(duration); // Sample for 5ms
-    total_v += SampleVoltage(duration);
-    endtime = millis();
-    // this loop takes 10ms
-  }
-
-  digitalWrite(PWM_Pin, LOW); // Set MOSFET low at the end of the on period.
-
-  float avg_current = duty_cycle * (total_c / (t_on/(duration * 2))); // calculate average current based on duty cycle
-
-  float avg_voltage = duty_cycle * (total_v / (t_on/(duration * 2))); // calculate average voltage based on duty cycle
-
-  float inst_power = avg_current * avg_voltage; // calculate power produced in the total cycle period
-
-  int val = map(avg_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
-
-  for(int i = 0; i < val; i++){
-
-    leds[i] = CRGB::Blue;
-    FastLED.show(); // Turn on the number of LEDs corresponding to the mapped voltage values
-
-  }
-  
-
-  delay(t_off); // Keep the MOSFET low for t_off
-
-  float energy = inst_power * ((float)sampling_period/1000);
-  cum_energy = cum_energy + energy;
-  Serial.print(avg_current, 2); Serial.print(","); Serial.print(avg_voltage, 2); Serial.print(","); Serial.print(inst_power, 2);
-  Serial.print(","); Serial.print(cum_energy, 2); Serial.println(""); // send data to the PC using serial.print
-
 }
