@@ -183,7 +183,7 @@ class GraphPage(tk.Frame):
         self.time = 10
 
         # For the current graph
-        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 40, color='c')
+        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 15, color='c')
         current_canvas.place(x=10, y=50)
         #current_canvas.pack(expand=True, side=tk.LEFT)
         
@@ -202,13 +202,14 @@ class GraphPage(tk.Frame):
         energy = EnergyLabel(energy_frame)
         energy.place(x=1040, y=630)         # energy_frames x+40 and y+30 from trial and error
         
-        timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = 100, width = 140).place(x=1200, y=100)
-        self.timer_frame = timer_frame
+        timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = 100, width = 140)
+        timer_frame.place(x=1200, y=100)
         
-        timer_label = tk.Label(self, timer_frame, text='5', font='Verdana 20')
-        timer_label.place(x=1260, y=130)         # timer_framee x+60 and y+30 from trial and error
+        timer_label = tk.Label(timer_frame, text='5', font='Verdana 20')
+       # timer_label.place(x=1260, y=130)         # timer_framee x+60 and y+30 from trial and error
+        timer_label.place(x = 60, y = 30)
         
-        speed = Meter(self, radius=260, start=0, end=30, border_width=0,
+        speed = Meter(self, radius=260, start=0, end=50, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
                text_font="DS-Digital 30", scale_color="white", needle_color="red")
         
@@ -246,7 +247,9 @@ class GraphPage(tk.Frame):
                 timer_label.config(text=str(self.count))
                 self.after(1000, countdown)
             else:
-                self.timer_frame.config(text='Remaining Time (s)')
+                timer_frame.config(text = "Remaining Time (s)")
+                t_timer = threading.Thread(target = timer)
+                t_timer.start()
                 
         
         def timer():
