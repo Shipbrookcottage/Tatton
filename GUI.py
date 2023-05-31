@@ -23,7 +23,7 @@ global filepath
 filepath = 'data.csv'
 
 def pause():
-    os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Blank -u -p /dev/cu.usbmodem1301')
+    os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Blank -u -p /dev/cu.usbmodem101')
 
 LARGEFONT = ("Verdana", 35)
 style.use('fivethirtyeight')
@@ -178,6 +178,9 @@ class GraphPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         super(GraphPage, self).__init__(parent)
+        
+        self.count = 5
+        self.time = 10
 
         # For the current graph
         current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 40, color='c')
@@ -199,9 +202,10 @@ class GraphPage(tk.Frame):
         energy = EnergyLabel(energy_frame)
         energy.place(x=1040, y=630)         # energy_frames x+40 and y+30 from trial and error
         
-        timer_frame = tk.LabelFrame(self, text='Remaining Time (s)', height = 100, width = 140).place(x=1200, y=100)
+        timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = 100, width = 140).place(x=1200, y=100)
+        self.timer_frame = timer_frame
         
-        timer_label = tk.Label(self ,timer_frame, text='Old Text', font='Verdana 20')
+        timer_label = tk.Label(self, timer_frame, text='5', font='Verdana 20')
         timer_label.place(x=1260, y=130)         # timer_framee x+60 and y+30 from trial and error
         
         speed = Meter(self, radius=260, start=0, end=30, border_width=0,
@@ -211,8 +215,8 @@ class GraphPage(tk.Frame):
         speed.place(x=600, y = 500)
         
         def get_data():
-            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/V_C -u -p /dev/cu.usbmodem1301')
-            ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
+            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/V_C -u -p /dev/cu.usbmodem101')
+            ser = serial.Serial('/dev/cu.usbmodem101', 9600)
             global max_power
             global cum_energy # variable to store cumulative energy for the leaderboard
             max_power = 0
@@ -235,13 +239,32 @@ class GraphPage(tk.Frame):
                     data = [username.get(), max_power, cum_energy, date.today()]
                     write_csv(filepath, data)
                     break
+        
+        def countdown():
+            if self.count > 0:
+                self.count -= 1
+                timer_label.config(text=str(self.count))
+                self.after(1000, countdown)
+            else:
+                self.timer_frame.config(text='Remaining Time (s)')
+                
+        
+        def timer():
+            if self.time > 0:
+                self.time -= 1
+                timer_label.config(text=str(self.time))
+                self.after(1000, timer)
+                
                 
         def start():  
             speed.set(0)
             energy.setE(0)
             energy.show()
-            t = threading.Thread(target=get_data)      
+            t = threading.Thread(target=get_data)  
+            t_count = threading.Thread(target=countdown)    
             t.start()
+            t_count.start()
+            
         
         def deletetext():
             clear_graphs()
