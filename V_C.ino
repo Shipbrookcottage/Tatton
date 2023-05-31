@@ -1,9 +1,9 @@
-// This is the code for the competition mode as of 28/5/2023
+// This is the code for the competition mode as of 31/5/2023
 // This code will use the mapped frequency values to send frequency
 #include <FastLED.h>
 
-#define Current_In_Pin A5
 #define Voltage_In_Pin A0
+#define Current_In_Pin A5
 #define PWM_Pin 2
 #define LED_PIN 8
 #define NUM_LEDS 60
@@ -22,6 +22,7 @@ float frequency;
 float avg_current;
 float avg_voltage;
 float inst_power;
+float max_voltage = 0; // to put on the led strip at the end
 float energy;
 int val;
 
@@ -33,7 +34,7 @@ float SampleCurrent(int duration) {
   float primary_current = 0;
   float nominal_current = 15;
   float total = 0;
-  float sample_time = 0.1;
+  float sample_time = 0.2;
   float samples = duration / sample_time;
 
   float starttime = millis();
@@ -41,14 +42,14 @@ float SampleCurrent(int duration) {
 
   while((endtime - starttime) <= duration){
     adc_value = analogRead(Current_In_Pin);
-    adc_voltage = adc_value * reference_voltage / 1024;
-    primary_current = (nominal_current * (adc_voltage - transducer_ref)) / 0.625;
+    adc_voltage = adc_value * reference_voltage / 1023;
+    primary_current = 24 * (adc_voltage - transducer_ref);
     total += primary_current; 
     delay(sample_time);
     endtime = millis();
   }
 
-  float avg_current = total / samples;
+  float avg_current = (total / samples) / 1.666;
   return avg_current;
 }
 
@@ -66,17 +67,19 @@ float SampleVoltage(int duration) {
 
   while((endtime - starttime) <= duration){
     adc_value = analogRead(Voltage_In_Pin); // between 0 and 1023
-    float voltage_in = adc_value * voltage_max / 1024.0; // voltage value between 0 and 150.5 V
+    float voltage_in = adc_value * voltage_max / 1023.0; // voltage value between 0 and 150.5 V
     total = total + voltage_in;
     delay(sampling_time);
     endtime = millis();
   }
 
-  float avg_voltage = (2 * total) / samples;
+  float avg_voltage =  total / samples;
   return avg_voltage;
 }
 
 void cycle(int runtime){
+
+  Serial.println("0,0,0,0,0");
   unsigned long stime = millis();
 
   while((millis() - stime) <= runtime){
@@ -93,14 +96,23 @@ void cycle(int runtime){
       // this loop takes 10ms
     }
 
-    digitalWrite(PWM_Pin, LOW);
 
     avg_current = duty_cycle * (total_c / (t_on/(duration * 2)));
+
+    avg_voltage = 1.8 * duty_cycle * (total_v / (t_on/(duration * 2)));
+
+    if(avg_voltage < 10){
+      avg_voltage = 0;
+      avg_current = 0;
+    }
+
+    if(avg_voltage > max_voltage){
+      max_voltage = avg_voltage;
+    }
+
     if(avg_current < 0){
       avg_current = -avg_current;
     }
-
-    avg_voltage = duty_cycle * (total_v / (t_on/(duration * 2)));
 
     inst_power = avg_current * avg_voltage;
 
@@ -108,7 +120,12 @@ void cycle(int runtime){
 
     cum_energy = cum_energy + energy;
 
-    frequency = 0.3173*avg_voltage + 0.6604; // Equation for frequency was taken from testing
+    if(avg_voltage == 0){
+      frequency = 0;
+    }
+    else{
+      frequency = 0.3173*avg_voltage + 0.6604; // Equation for frequency was taken from testing
+    }
 
     val = map(avg_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
     for(int i = 0; i < val; i++){
@@ -117,8 +134,9 @@ void cycle(int runtime){
     }
 
     Serial.print(avg_current, 2); Serial.print(","); Serial.print(avg_voltage, 2); Serial.print(","); Serial.print(inst_power, 2);
-    Serial.print(","); Serial.print(cum_energy, 2); Serial.print(","); Serial.print(frequency, 1); Serial.print(","); /*Serial.print(remaining, 1)*/;
+    Serial.print(","); Serial.print(cum_energy, 2); Serial.print(","); Serial.print(frequency, 1); /*Serial.print(","); Serial.print(remaining, 1)*/;
     Serial.println("");
+    digitalWrite(PWM_Pin, LOW);
     delay(t_off);
   }
 }
@@ -130,8 +148,14 @@ void setup() {
 
   Serial.begin(9600);
   //analogReference(EXTERNAL);
-  //delay(5000);
+  delay(800);
   cycle(10000);
+  digitalWrite(PWM_Pin, HIGH);
+  val = map(max_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
+  for(int i = 0; i < val; i++){
+    leds[i] = CRGB::Blue;
+    FastLED.show();
+  }
   Serial.println("Done");
 
 }
