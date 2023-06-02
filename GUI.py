@@ -17,13 +17,14 @@ import threading
 import csv
 from datetime import date
 
-import upload_blank
+import upload_difficulty
 
 global filepath
 filepath = 'data.csv'
 
 def pause():
-    os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Blank -u -p /dev/cu.usbmodem101')
+    #os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Blank -u -p /dev/cu.usbmodem1301')
+    os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Difficulty -u -p /dev/cu.usbmodem1301')
 
 LARGEFONT = ("Verdana", 35)
 style.use('fivethirtyeight')
@@ -171,8 +172,6 @@ class CompMode(tk.Frame):
         button = tk.Button(self, text='Enter', command = onClick).pack()
         button2 = tk.Button(self, text = 'Start Competition Mode', command  = lambda : controller.show_frame(GraphPage)).pack()
            
-        
-          
 
 class GraphPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -181,19 +180,21 @@ class GraphPage(tk.Frame):
         
         self.count = 5
         self.time = 10
+        
+        
 
         # For the current graph
-        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 15, color='c')
+        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 3, color='c')
         current_canvas.place(x=10, y=50)
         #current_canvas.pack(expand=True, side=tk.LEFT)
         
         # For the voltage graph
-        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 100, color='g')
+        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 60, color='g')
         voltage_canvas.place(x=10, y=450)
         #voltage_canvas.pack(expand=True, side=tk.TOP)
         
         # For the power graph
-        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 1000, color='b')
+        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 150, color='b')
         power_canvas.place(x=600, y=50)
         #power_canvas.pack(expand=True, side=tk.LEFT)
         
@@ -216,8 +217,8 @@ class GraphPage(tk.Frame):
         speed.place(x=600, y = 500)
         
         def get_data():
-            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/V_C -u -p /dev/cu.usbmodem101')
-            ser = serial.Serial('/dev/cu.usbmodem101', 9600)
+            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/V_C -u -p /dev/cu.usbmodem1301')
+            ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
             global max_power
             global cum_energy # variable to store cumulative energy for the leaderboard
             max_power = 0
@@ -258,6 +259,12 @@ class GraphPage(tk.Frame):
                 timer_label.config(text=str(self.time))
                 self.after(1000, timer)
                 
+        def reset_timers():
+            self.count = 5
+            self.time = 10
+            timer_frame.config(text = "Countdown (s)")
+            timer_label.config(text = str(self.count))
+                
                 
         def start():  
             speed.set(0)
@@ -270,6 +277,7 @@ class GraphPage(tk.Frame):
             
         
         def deletetext():
+            reset_timers()
             clear_graphs()
             energy.hide()
             pause
@@ -332,6 +340,8 @@ class Grid(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         super(Grid, self).__init__(parent)
+        
+        
     
        # Wind = tk.LabelFrame(self, text = 'Wind Generation (W)').pack()
        # Wind_p = tk.Label(Wind, text = '10.4 W').pack()
