@@ -1,30 +1,53 @@
-// This is the code for the competition mode as of 31/5/2023
+// This is the code for the competition mode as of 28/5/2023
 // This code will use the mapped frequency values to send frequency
 #include <FastLED.h>
 
-#define Voltage_In_Pin A0
+#define Voltage_In_Pin A1
 #define Current_In_Pin A5
 #define PWM_Pin 2
 #define LED_PIN 8
 #define NUM_LEDS 60
+
+// Pins for 3 way dial
+const int D_OUT[4] = {44, 40, 36, 32};
+const int D_READ[4] = {42, 38, 34, 30};
+
+int state[4] = {0,0,0,0};
+
 CRGB leds[NUM_LEDS];
 
 float sampling_period  = 200;
 float duty_cycle  = 1;
 int duration  = 5;
-float t_on = duty_cycle * sampling_period;
-float t_off = sampling_period - t_on;
 float total_v; // variable to store the running total for voltage for the duty cycle
 float total_c;
 float cum_energy = 0; // cumulative energy
-unsigned long starttime;
 float frequency;
+unsigned long starttime;
 float avg_current;
 float avg_voltage;
 float inst_power;
 float max_voltage = 0; // to put on the led strip at the end
 float energy;
-int val;
+int val; // to light led strip
+
+float difficulty(){
+
+  state[0] = digitalRead(D_READ[0]);
+  state[1] = digitalRead(D_READ[1]);
+  state[2] = digitalRead(D_READ[2]);
+  state[3] = digitalRead(D_READ[3]);
+
+  if(state[0] == HIGH && state[3] == HIGH){
+    return 1;
+  }
+  else if(state[1] == HIGH && state[2] == HIGH){
+    return 0.3;
+  }
+  else{
+    return 0.6;
+  }
+}
 
 float SampleCurrent(int duration) {
   int adc_value = 0;
@@ -59,7 +82,7 @@ float SampleVoltage(int duration) {
   float reference_voltage = 5;
   float voltage_max = 150.5;
   float total = 0;
-  float sampling_time = 0.1;
+  float sampling_time = 0.2;
   float samples = duration / sampling_time;
 
   float starttime = millis();
@@ -77,10 +100,13 @@ float SampleVoltage(int duration) {
   return avg_voltage;
 }
 
-void cycle(int runtime){
+void cycle(int runtime, float duty){
 
   Serial.println("0,0,0,0,0");
   unsigned long stime = millis();
+  float t_on = duty * sampling_period;
+  float t_off = sampling_period - t_on;
+  
 
   while((millis() - stime) <= runtime){
     digitalWrite(PWM_Pin, HIGH);
@@ -106,8 +132,19 @@ void cycle(int runtime){
       avg_current = 0;
     }
 
+
     if(avg_voltage > max_voltage){
       max_voltage = avg_voltage;
+    }
+
+    if(duty == 0.3){
+      frequency = 1.13 * avg_voltage + 3.1;
+    }
+    else if(duty == 0.6){
+      frequency = 1.27 * avg_voltage - 1.19;
+    }
+    else if(duty == 1){
+      frequency = 1.26 * avg_voltage + 0.25;
     }
 
     if(avg_current < 0){
@@ -120,14 +157,7 @@ void cycle(int runtime){
 
     cum_energy = cum_energy + energy;
 
-    if(avg_voltage == 0){
-      frequency = 0;
-    }
-    else{
-      frequency = 0.3173*avg_voltage + 0.6604; // Equation for frequency was taken from testing
-    }
-
-    val = map(avg_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
+    val = map(avg_voltage, 0, 50, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
     for(int i = 0; i < val; i++){
       leds[i] = CRGB::Blue;
       FastLED.show();
@@ -145,15 +175,21 @@ void setup() {
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
   pinMode(PWM_Pin, OUTPUT);
   digitalWrite(PWM_Pin, HIGH);
+  for(int i = 0; i < 4; i++){
+    pinMode(D_READ[i], INPUT_PULLUP);
+    pinMode(D_OUT[i], OUTPUT);
+  }
+
+  duty_cycle = difficulty();
 
   Serial.begin(9600);
   //analogReference(EXTERNAL);
   delay(800);
-  cycle(10000);
+  cycle(10000, duty_cycle);
   digitalWrite(PWM_Pin, HIGH);
   val = map(max_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
   for(int i = 0; i < val; i++){
-    leds[i] = CRGB::Blue;
+    leds[i] = CRGB::Red;
     FastLED.show();
   }
   Serial.println("Done");
