@@ -308,7 +308,7 @@ class GraphPage(tk.Frame):
         speed.place(x=600, y = 500)
         
         def get_data():
-            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/V_C -u -p /dev/cu.usbmodem1301')
+            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Competition_Mode -u -p /dev/cu.usbmodem1301')
             ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
             global max_power
             global cum_energy # variable to store cumulative energy for the leaderboard
