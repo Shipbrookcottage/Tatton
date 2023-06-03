@@ -40,8 +40,7 @@ filepath = 'data.csv'
 
 ## @brief Function to pause the execution of the program.
 def pause():
-    #os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Blank -u -p /dev/cu.usbmodem1301')
-    os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Difficulty -u -p /dev/cu.usbmodem1301')
+    os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/4th_Year_Project/Code/Arduino/Difficulty -u -p /dev/cu.usbmodem1301')
 
 ## @var LARGEFONT
 # Variable that represents the font style for large text.
@@ -61,9 +60,8 @@ class GUI(tk.Tk):
         # __init__ function for class Tk
         tk.Tk.__init__(self, *args, **kwargs)
         
-        self.geometry('10000x9000')
-        
         self.title('Demo')
+        self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")
        
         # creating container
         container = tk.Frame(self)
@@ -139,6 +137,7 @@ class graph(tk.Canvas):
         if self.data:
             self.line.set_data(range(len(self.data)), self.data)
             self.plot.set_xlim(0, len(self.data))
+            self.plot.set_ylim(0, 1.25 * max(self.data))
     
     ## @brief Sets a new data value for the graph.
     # @param value The new data value.        
@@ -184,7 +183,7 @@ class EnergyLabel(tk.Label):
         
     ## @brief Shows the energy label.
     def show(self):
-        self.place(x=1040, y=630)  
+        self.place(relx=0.72, rely=0.7)  
     
     ## @brief Hides the energy label.
     def hide(self):
@@ -223,11 +222,14 @@ class Home(tk.Frame):
         tk.Frame.__init__(self, parent)
         super(Home,  self).__init__(parent)
         
-        welcome = tk.Label(self, text='Welcome!', font ='Verdana 30').pack()
-        
-        button = tk.Button(self, text='Competition Mode', command= lambda : controller.show_frame(CompMode)).pack()
-        
-        button2 = tk.Button(self, text='Grid Mode', command= lambda : controller.show_frame(Grid)).pack()
+        welcome = tk.Label(self, text='Welcome!', font='Verdana 30', fg='blue')
+        welcome.place(relx=0.5, rely=0.3, anchor='center')
+
+        button = tk.Button(self, text='Competition Mode', command=lambda: controller.show_frame(CompMode), font='Arial 12 bold')
+        button.place(relx=0.5, rely=0.5, anchor='center')
+
+        button2 = tk.Button(self, text='Grid Mode', command=lambda: controller.show_frame(Grid), font='Arial 12 bold')
+        button2.place(relx=0.5, rely=0.6, anchor='center')
 
 ## @class CompMode
 # @brief A custom frame widget for the competition mode screen.
@@ -243,17 +245,26 @@ class CompMode(tk.Frame):
         tk.Frame.__init__(self, parent)
         super(CompMode,  self).__init__(parent)
         
-        welcome = tk.Label(self, text='Welcome to the Competition Mode!', font ='Verdana 30').pack() 
-        usernameLabel = tk.Label(self, text="User Name").pack()
+        welcome = tk.Label(self, text='Welcome to the Competition Mode!', font='Verdana 30', fg='blue')
+        welcome.place(relx=0.5, rely=0.3, anchor='center')
+        
+        usernameLabel = tk.Label(self, text="User Name", font='Verdana 12 bold', fg='black')
+        usernameLabel.place(relx=0.5, rely=0.4, anchor='center')
+        
         global username
         username = tk.StringVar()
-        usernameEntry = tk.Entry(self, textvariable=username).pack()
+        usernameEntry = tk.Entry(self, textvariable=username, font='Verdana 12')
+        usernameEntry.place(relx=0.5, rely=0.45, anchor='center')
         
         def onClick():
             tkinter.messagebox.showinfo('Demo', 'Username Saved!')
             
-        button = tk.Button(self, text='Enter', command = onClick).pack()
-        button2 = tk.Button(self, text = 'Start Competition Mode', command  = lambda : controller.show_frame(GraphPage)).pack()
+        button = tk.Button(self, text='Enter', command=onClick, font='Verdana 12', bg='lightblue', fg='black')
+        button.place(relx=0.5, rely=0.5, anchor='center')
+        
+        button2 = tk.Button(self, text='Start Competition Mode', command=lambda: controller.show_frame(GraphPage),
+                            font='Verdana 12 bold', bg='green', fg='white')
+        button2.place(relx=0.5, rely=0.6, anchor='center')
            
 ## @class GraphPage
 # @brief A custom frame widget for the graph page.
@@ -276,39 +287,39 @@ class GraphPage(tk.Frame):
 
         # For the current graph
         current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 3, color='c')
-        current_canvas.place(x=10, y=50)
+        current_canvas.place(relx=0.007, rely=0.056)
         #current_canvas.pack(expand=True, side=tk.LEFT)
         
         # For the voltage graph
         voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 60, color='g')
-        voltage_canvas.place(x=10, y=450)
+        voltage_canvas.place(relx=0.007, rely=0.5)
         #voltage_canvas.pack(expand=True, side=tk.TOP)
         
         # For the power graph
         power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 150, color='b')
-        power_canvas.place(x=600, y=50)
+        power_canvas.place(relx=0.417, rely=0.056)
         #power_canvas.pack(expand=True, side=tk.LEFT)
         
-        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height= 100, width=150).place(x=1000, y=600)
+        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height= 0.111, width=0.104).place(relx=0.694, rely=0.667)
+        
         
         energy = EnergyLabel(energy_frame)
-        energy.place(x=1040, y=630)         # energy_frames x+40 and y+30 from trial and error
+        energy.place(relx=0.722, rely=0.7)         # energy_frames x+40 and y+30 from trial and error
         
         timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = 100, width = 140)
-        timer_frame.place(x=1200, y=100)
+        timer_frame.place(relx=0.833, y=0.111)
         
         timer_label = tk.Label(timer_frame, text='5', font='Verdana 20')
-       # timer_label.place(x=1260, y=130)         # timer_framee x+60 and y+30 from trial and error
-        timer_label.place(x = 60, y = 30)
+        timer_label.place(relx = 0.045, y = 0.033)
         
         speed = Meter(self, radius=260, start=0, end=50, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
                text_font="DS-Digital 30", scale_color="white", needle_color="red")
         
-        speed.place(x=600, y = 500)
+        speed.place(relx=0.417, rely = 0.556)
         
         def get_data():
-            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Competition_Mode -u -p /dev/cu.usbmodem1301')
+            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/4th_Year_Project/Code/Arduino/V_C -u -p /dev/cu.usbmodem1301')
             ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
             global max_power
             global cum_energy # variable to store cumulative energy for the leaderboard
@@ -385,11 +396,11 @@ class GraphPage(tk.Frame):
             power_canvas.clear()
         
         
-        button1 = tk.Button(self, text="Start", command = start).place(x=1300, y=700)
+        button1 = tk.Button(self, text="Start", command = start).place(relx=0.903, rely=0.778)
         
-        button2 = tk.Button(self, text="Next", command = deletetext).place(x=1300, y=750)
+        button2 = tk.Button(self, text="Next", command = deletetext).place(relx=0.903, rely=0.833)
         
-        button3 = tk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
+        button3 = tk.Button(self, text = "Quit", command = quit).place(relx=0.903, rely=0.889)
 
 ## @class Leaderboard
 # @brief A custom frame widget for displaying a leaderboard.
