@@ -1,36 +1,42 @@
-// This is the code for the competition mode as of 28/5/2023
-// This code will use the mapped frequency values to send frequency
+/**
+ * @file
+ * This is the code for the competition mode as of 2/6/2023.
+ */
 #include <FastLED.h>
 
-#define Voltage_In_Pin A1
-#define Current_In_Pin A5
-#define PWM_Pin 2
-#define LED_PIN 8
-#define NUM_LEDS 60
+#define Voltage_In_Pin A1   // Pin to sense voltage transducer output
+#define Current_In_Pin A5   // Pin to sense current transducer output
+#define PWM_Pin 2           // Pin to do PWM switiching on the mosfet
+#define LED_PIN 8           // Pin that controls the LED strip
+#define NUM_LEDS 60         // Number of LEDs on the LED strip
 
-// Pins for 3 way dial
-const int D_OUT[4] = {44, 40, 36, 32};
-const int D_READ[4] = {42, 38, 34, 30};
+CRGB leds[NUM_LEDS];        // Initialising the LED strip
 
-int state[4] = {0,0,0,0};
+// Pins for 3 way dial that controls the difficulty level
+const int D_OUT[4] = {44, 40, 36, 32};  // Pins used to supply 5V to 3 way dial
+const int D_READ[4] = {42, 38, 34, 30}; // Pins used to read the state of the 3 way dial
 
-CRGB leds[NUM_LEDS];
+bool state[4] = {0,0,0,0};  // variable to store the states of eacher 3 way dial pin 
 
-float sampling_period  = 200;
-float duty_cycle  = 1;
-int duration  = 5;
-float total_v; // variable to store the running total for voltage for the duty cycle
-float total_c;
-float cum_energy = 0; // cumulative energy
-float frequency;
-unsigned long starttime;
-float avg_current;
+float pwm_period  = 200;    // length of time in pwm period
+float duty_cycle  = 1;      // variable to hold selected duty cycle for switching
+int duration  = 5;          // length of time to sample voltage and current 
+float total_v;              // variable to store the running total for voltage for the duty cycle
+float total_c;              // variable to store the running total for current for the duty cycle
+float cum_energy = 0;       // cumulative energy total
+float frequency;            
+unsigned long starttime;    // time variable to start sampling voltage and current
+float avg_current;    
 float avg_voltage;
-float inst_power;
-float max_voltage = 0; // to put on the led strip at the end
+float inst_power;   
+float max_voltage = 0;      // to put on the led strip at the end
 float energy;
-int val; // to light led strip
+int val;                    // to light led strip
 
+/**
+ * @brief Function to decide the duty cycle of the PWM switching using the 3-way dial.
+ * @return The selected duty cycle.
+ */
 float difficulty(){
 
   state[0] = digitalRead(D_READ[0]);
@@ -49,6 +55,11 @@ float difficulty(){
   }
 }
 
+/**
+ * @brief Function to sample the current.
+ * @param duration The duration for sampling.
+ * @return The average current.
+ */
 float SampleCurrent(int duration) {
   int adc_value = 0;
   float adc_voltage = 0;
@@ -76,6 +87,11 @@ float SampleCurrent(int duration) {
   return avg_current;
 }
 
+/**
+ * @brief Function to sample the voltage.
+ * @param duration The duration for sampling.
+ * @return The average voltage.
+ */
 float SampleVoltage(int duration) {
   int adc_value = 0;
   float adc_voltage = 0;
@@ -100,12 +116,17 @@ float SampleVoltage(int duration) {
   return avg_voltage;
 }
 
+/**
+ * @brief Function to perform the switching cycle.
+ * @param runtime The duration of the switching cycle.
+ * @param duty The duty cycle for switching.
+ */
 void cycle(int runtime, float duty){
 
   Serial.println("0,0,0,0,0");
   unsigned long stime = millis();
-  float t_on = duty * sampling_period;
-  float t_off = sampling_period - t_on;
+  float t_on = duty * pwm_period;
+  float t_off = pwm_period - t_on;
   
 
   while((millis() - stime) <= runtime){
@@ -137,6 +158,7 @@ void cycle(int runtime, float duty){
       max_voltage = avg_voltage;
     }
 
+    // frequency values based on mapping voltage to frequency tests that took place for different duty cycles
     if(duty == 0.3){
       frequency = 1.13 * avg_voltage + 3.1;
     }
@@ -153,7 +175,7 @@ void cycle(int runtime, float duty){
 
     inst_power = avg_current * avg_voltage;
 
-    energy = inst_power * ((float)sampling_period/1000);
+    energy = inst_power * ((float)pwm_period/1000);
 
     cum_energy = cum_energy + energy;
 
@@ -163,6 +185,7 @@ void cycle(int runtime, float duty){
       FastLED.show();
     }
 
+    // Here data is sent to the Python script using serial communication
     Serial.print(avg_current, 2); Serial.print(","); Serial.print(avg_voltage, 2); Serial.print(","); Serial.print(inst_power, 2);
     Serial.print(","); Serial.print(cum_energy, 2); Serial.print(","); Serial.print(frequency, 1); /*Serial.print(","); Serial.print(remaining, 1)*/;
     Serial.println("");
