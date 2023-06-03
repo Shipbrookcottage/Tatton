@@ -1,3 +1,17 @@
+## @file
+# @brief This file contains a Python code that utilizes the tkinter and matplotlib libraries to create a GUI application.
+#
+# The code creates a GUI application with several pages, including a home page, competitive mode page, graph page, leaderboard page, and grid page.
+# Each page is represented by a class that inherits from the tkinter Frame class.
+# The code also includes a Graph class that extends the tkinter Canvas widget to display a graph using matplotlib.
+# Additional modules and libraries are imported to support various functionalities of the application.
+#
+# This code is a part of a larger project for the 4th year project.
+#
+# @note This code assumes that the required libraries and modules are installed.
+# @note The code may require modification to work properly in different environments.
+#
+
 import tkinter as tk
 import tkinter.messagebox
 from tkdial import Meter
@@ -19,14 +33,22 @@ from datetime import date
 
 import upload_difficulty
 
+## @var filepath
+# Global variable that represents the file path for the data.csv file.
 global filepath
 filepath = 'data.csv'
 
+## @brief Function to pause the execution of the program.
 def pause():
     #os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Blank -u -p /dev/cu.usbmodem1301')
     os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/"4th Year Project"/Code/Arduino/Difficulty -u -p /dev/cu.usbmodem1301')
 
+## @var LARGEFONT
+# Variable that represents the font style for large text.
 LARGEFONT = ("Verdana", 35)
+
+## @var style
+# Variable that represents the style used by matplotlib for plotting.
 style.use('fivethirtyeight')
         
                 
@@ -69,8 +91,24 @@ class GUI(tk.Tk):
         frame.tkraise()
    
     # Start Page setup
-    
+
+
+## @class graph
+# @brief A custom graph widget that extends the tkinter Canvas widget.
+#
+# The graph class provides functionality to create and update a graph using the matplotlib library.
+# It allows customization of the graph's title, ylabel, xlabel, label, ylim, and color.
+
 class graph(tk.Canvas):
+    ## @brief Initializes a graph object.
+    # @param parent The parent tkinter widget for the graph.
+    # @param title The title of the graph.
+    # @param ylabel The label for the y-axis.
+    # @param xlabel The label for the x-axis.
+    # @param label The label for the graph line.
+    # @param ylim The upper limit for the y-axis.
+    # @param color The color of the graph line.
+    # @param **kwargs Additional keyword arguments for the tkinter Canvas widget.
     def __init__(self, parent, title = '', ylabel = '', xlabel = '', label = '', ylim = 1, color = 'c',**kwargs):
         tk.Canvas.__init__(self, parent, **kwargs)
         self.data = []
@@ -94,16 +132,20 @@ class graph(tk.Canvas):
         
         self.ani = animation.FuncAnimation(self.fig, self.update_graph, interval = 200, frames = 200, repeat = False)
         self.canvas.draw()
-        
+    
+    ## @brief Updates the graph with new data.
+    # @param i The current iteration/frame number (not used in this implementation).    
     def update_graph(self, i):
         if self.data:
             self.line.set_data(range(len(self.data)), self.data)
             self.plot.set_xlim(0, len(self.data))
-            
+    
+    ## @brief Sets a new data value for the graph.
+    # @param value The new data value.        
     def set(self, value):
         self.data.append(value)
-        #self.label_data.config(text=value)
-    
+          
+    ## @brief Clears the graph and resets its properties.
     def clear(self):
         self.data = []
         self.plot.clear()  # Clear the plot
@@ -119,32 +161,64 @@ class graph(tk.Canvas):
         self.canvas.get_tk_widget().after_cancel(self.ani)
         self.ani = animation.FuncAnimation(self.fig, self.update_graph, interval=200, frames=200, repeat=False)
         self.canvas.draw()
-        
+
+
+## @class EnergyLabel
+# @brief A custom energy label widget that extends the tkinter Label widget.
+#
+# The EnergyLabel class provides functionality to display an energy value using a tkinter Label.
+# It allows setting the energy value and showing/hiding the label.   
 class EnergyLabel(tk.Label):
+    ## @brief Initializes an EnergyLabel object.
+    # @param parent The parent tkinter widget for the energy label.
+    # @param **kwargs Additional keyword arguments for the tkinter Label widget.
     def __init__(self, parent, **kwargs):
         tk.Label.__init__(self, parent, **kwargs)
         self.label_energy = tk.Label(self, font='Verdana 20')
         self.label_energy.pack()
     
+    ## @brief Sets the energy value to be displayed.
+    # @param value The energy value.
     def setE(self, value):
         self.label_energy.config(text=value)
-    
+        
+    ## @brief Shows the energy label.
     def show(self):
         self.place(x=1040, y=630)  
     
+    ## @brief Hides the energy label.
     def hide(self):
         self.place_forget()
         
-
-class Label_Frame(tk.LabelFrame) :
+## @class Label_Frame
+# @brief A custom label frame widget that extends the tkinter LabelFrame widget.
+#
+# The Label_Frame class provides functionality to create a labeled frame using the tkinter LabelFrame widget.
+# It allows setting the title and value to be displayed within the frame.
+# The class inherits from the tkinter LabelFrame class.
+class Label_Frame(tk.LabelFrame):
+    ## @brief Initializes a Label_Frame object.
+    # @param parent The parent tkinter widget for the label frame.
+    # @param title The title to be displayed on the frame.
+    # @param value The value to be displayed within the frame.
+    # @param **kwargs Additional keyword arguments for the tkinter LabelFrame widget.
     def __init__(self, parent, title = '', value = 1, **kwargs):
         tk.LabelFrame.__init__(self, parent, **kwargs)
         self.frame = tk.LabelFrame(self, text = title)
         self.frame.pack()
         self.text = tk.Label(self.frame, text = value)
         self.text.pack()
-        
+
+## @class Home
+# @brief A custom frame widget for the home screen.
+#
+# The Home class provides functionality to create a home screen using the tkinter Frame widget.
+# It displays a welcome message and buttons for different modes.
+# The class inherits from the tkinter Frame class.        
 class Home(tk.Frame):
+    ## @brief Initializes a Home object.
+    # @param parent The parent tkinter widget for the home screen.
+    # @param controller The controller object for managing frame transitions.
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         super(Home,  self).__init__(parent)
@@ -154,8 +228,17 @@ class Home(tk.Frame):
         button = tk.Button(self, text='Competition Mode', command= lambda : controller.show_frame(CompMode)).pack()
         
         button2 = tk.Button(self, text='Grid Mode', command= lambda : controller.show_frame(Grid)).pack()
-        
+
+## @class CompMode
+# @brief A custom frame widget for the competition mode screen.
+#
+# The CompMode class provides functionality to create a competition mode screen using the tkinter Frame widget.
+# It displays a welcome message, username input field, and buttons for entering and starting the competition mode.
+# The class inherits from the tkinter Frame class.        
 class CompMode(tk.Frame):
+    ## @brief Initializes a CompMode object.
+    # @param parent The parent tkinter widget for the competition mode screen.
+    # @param controller The controller object for managing frame transitions.
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         super(CompMode,  self).__init__(parent)
@@ -172,8 +255,16 @@ class CompMode(tk.Frame):
         button = tk.Button(self, text='Enter', command = onClick).pack()
         button2 = tk.Button(self, text = 'Start Competition Mode', command  = lambda : controller.show_frame(GraphPage)).pack()
            
-
+## @class GraphPage
+# @brief A custom frame widget for the graph page.
+#
+# The GraphPage class provides functionality to create a graph page using the tkinter Frame widget.
+# It displays multiple graphs, energy label, countdown timer, and buttons for controlling the page.
+# The class inherits from the tkinter Frame class.
 class GraphPage(tk.Frame):
+    ## @brief Initializes a GraphPage object.
+    # @param parent The parent tkinter widget for the graph page.
+    # @param controller The controller object for managing frame transitions.
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         super(GraphPage, self).__init__(parent)
@@ -299,8 +390,17 @@ class GraphPage(tk.Frame):
         button2 = tk.Button(self, text="Next", command = deletetext).place(x=1300, y=750)
         
         button3 = tk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
-        
+
+## @class Leaderboard
+# @brief A custom frame widget for displaying a leaderboard.
+#
+# The Leaderboard class provides functionality to create a leaderboard using the tkinter Frame widget.
+# It displays a list of ranked entries based on maximum power values.
+# The class inherits from the tkinter Frame class.        
 class Leaderboard(tk.Frame):
+    ## @brief Initializes a Leaderboard object.
+    # @param parent The parent tkinter widget for the leaderboard.
+    # @param controller The controller object for managing frame transitions.
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         super(Leaderboard, self).__init__(parent)
@@ -336,12 +436,20 @@ class Leaderboard(tk.Frame):
         jelly = tk.Label(self, text = 'ADD FOOD EQUIVALENT', font = 'Verdana 30').pack()
 
 # Need to write arduino code for Grid model mode first!!!!
+
+## @class Grid
+# @brief A custom frame widget for displaying grid-related information.
+#
+# The Grid class provides functionality to create a grid mode view using the tkinter Frame widget.
+# It displays information about wind and solar generation, and pedalling speed
+# The class inherits from the tkinter Frame class.
 class Grid(tk.Frame):
+    ## @brief Initializes a Grid object.
+    # @param parent The parent tkinter widget for the grid.
+    # @param controller The controller object for managing frame transitions.
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        super(Grid, self).__init__(parent)
-        
-        
+        super(Grid, self).__init__(parent)  
     
        # Wind = tk.LabelFrame(self, text = 'Wind Generation (W)').pack()
        # Wind_p = tk.Label(Wind, text = '10.4 W').pack()
