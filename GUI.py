@@ -137,7 +137,7 @@ class graph(tk.Canvas):
         if self.data:
             self.line.set_data(range(len(self.data)), self.data)
             self.plot.set_xlim(0, len(self.data))
-            self.plot.set_ylim(0, 1.25 * max(self.data))
+            #self.plot.set_ylim(0, max(self.data))
     
     ## @brief Sets a new data value for the graph.
     # @param value The new data value.        
@@ -173,7 +173,7 @@ class EnergyLabel(tk.Label):
     # @param **kwargs Additional keyword arguments for the tkinter Label widget.
     def __init__(self, parent, **kwargs):
         tk.Label.__init__(self, parent, **kwargs)
-        self.label_energy = tk.Label(self, font='Verdana 20')
+        self.label_energy = tk.Label(self, font='Verdana 30')
         self.label_energy.pack()
     
     ## @brief Sets the energy value to be displayed.
@@ -183,7 +183,7 @@ class EnergyLabel(tk.Label):
         
     ## @brief Shows the energy label.
     def show(self):
-        self.place(relx=0.72, rely=0.7)  
+        self.place(relx=0.73, rely=0.7)  
     
     ## @brief Hides the energy label.
     def hide(self):
@@ -287,32 +287,32 @@ class GraphPage(tk.Frame):
 
         # For the current graph
         current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 3, color='c')
-        current_canvas.place(relx=0.007, rely=0.056)
+        current_canvas.place(x = 0.007 * self.winfo_screenwidth(), y = 0.056*self.winfo_screenheight())
         #current_canvas.pack(expand=True, side=tk.LEFT)
         
         # For the voltage graph
         voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 60, color='g')
-        voltage_canvas.place(relx=0.007, rely=0.5)
+        voltage_canvas.place(x = 0.007 * self.winfo_screenwidth(), y = 0.5 * self.winfo_screenheight())
         #voltage_canvas.pack(expand=True, side=tk.TOP)
         
         # For the power graph
         power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 150, color='b')
-        power_canvas.place(relx=0.417, rely=0.056)
+        power_canvas.place(x = 0.417 * self.winfo_screenwidth(), y = 0.056 * self.winfo_screenheight())
         #power_canvas.pack(expand=True, side=tk.LEFT)
         
-        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height= 0.111, width=0.104).place(relx=0.694, rely=0.667)
+        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height= 100, width=150).place(relx=0.694, rely=0.667)
         
         
         energy = EnergyLabel(energy_frame)
-        energy.place(relx=0.722, rely=0.7)         # energy_frames x+40 and y+30 from trial and error
+        energy.place(relx=0.8, rely=0.7)         # energy_frames x+40 and y+30 from trial and error
         
         timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = 100, width = 140)
-        timer_frame.place(relx=0.833, y=0.111)
+        timer_frame.place(relx=0.833, rely=0.111)
         
-        timer_label = tk.Label(timer_frame, text='5', font='Verdana 20')
-        timer_label.place(relx = 0.045, y = 0.033)
+        timer_label = tk.Label(timer_frame, text='5', font='Verdana 30')
+        timer_label.place(relx = 0.5, rely = 0.45, anchor = 'center')
         
-        speed = Meter(self, radius=260, start=0, end=50, border_width=0,
+        speed = Meter(self, radius=260, start=0, end=90, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
                text_font="DS-Digital 30", scale_color="white", needle_color="red")
         
@@ -398,7 +398,7 @@ class GraphPage(tk.Frame):
         
         button1 = tk.Button(self, text="Start", command = start).place(relx=0.903, rely=0.778)
         
-        button2 = tk.Button(self, text="Next", command = deletetext).place(relx=0.903, rely=0.833)
+        button2 = tk.Button(self, text="Leaderboard", command = deletetext).place(relx=0.903, rely=0.833)
         
         button3 = tk.Button(self, text = "Quit", command = quit).place(relx=0.903, rely=0.889)
 
@@ -416,35 +416,113 @@ class Leaderboard(tk.Frame):
         tk.Frame.__init__(self, parent)
         super(Leaderboard, self).__init__(parent)
         
-        leaderboard_data = []
+        # Styling options
+        title_font = ("Arial", 25, "bold")
+        listbox_font = ("Arial", 20)
+        listbox_width = int((50/1440)*self.winfo_screenwidth())
+        listbox_height = int((20/900)*self.winfo_screenmmheight())
+        
+        # Flag to check state of leaderboard view
+        self.flag_v = True
+        
+        # creation of daily leaderboard
+        daily_leaderboard_data = []
+        
+        daily_leaderboard_title = tk.Label(self, text = "Daily Leaderboard", font = title_font)
+        daily_leaderboard_title.place(relx=0.02, rely=0.05, anchor='w')
       
-        leaderboard = tk.Listbox(self, width = 40, height = 10)
-        leaderboard.pack()    
+        daily_leaderboard = tk.Listbox(self, width = listbox_width, height = listbox_height, font = listbox_font)
+        daily_leaderboard.place(relx = 0.02, rely = 0.18, anchor='w')    
+        
+        # creation of all time leaderboard
+        all_leaderboard_data = []
+        
+        all_leaderboard_title = tk.Label(self, text = "All Time Leaderboard", font = title_font)
+        all_leaderboard_title.place(relx=0.98, rely=0.05, anchor='e')
+        
+        all_leaderboard = tk.Listbox(self, width = listbox_width, height = listbox_height, font = listbox_font)
+        all_leaderboard.place(relx = 0.98, rely = 0.18, anchor='e')   
            
         def update_board():
-            leaderboard.delete(0, tk.END)
-            leaderboard_data.clear()
+            daily_leaderboard.delete(0, tk.END)
+            daily_leaderboard_data.clear()
+            
+            all_leaderboard.delete(0, tk.END)
+            all_leaderboard_data.clear()
             with open(filepath, 'r') as file:
                 reader = csv.reader(file)
                 for i in reader:
-                    if i != '':
+                    if i != '' and i[0] != 'UserName':
+                        all_leaderboard_data.append(i)
                         if i[3] == str(date.today()):
-                            leaderboard_data.append(i)
-            leaderboard_data.sort(key = lambda max_p: max_p[1], reverse = True)
+                            daily_leaderboard_data.append(i)
+            all_leaderboard_data.sort(key = lambda max_p: float(max_p[1]), reverse = True)
+            daily_leaderboard_data.sort(key = lambda max_p: float(max_p[1]), reverse = True)
         
-            for rank, row in enumerate(leaderboard_data, start=1):
-                leaderboard.insert(tk.END, f"{rank}. {row[0]} - Maximum Power: {row[1]}")
-            leaderboard.update()
+            for rank, row in enumerate(daily_leaderboard_data, start=1):
+                daily_leaderboard.insert(tk.END, f"{rank}. {row[0]} - Maximum Power (W): {row[1]}")
+            daily_leaderboard.update()
+            
+            for rank1, row1 in enumerate(all_leaderboard_data, start=1):
+                all_leaderboard.insert(tk.END, f"{rank1}. {row1[0]} - Maximum Power (W): {row1[1]}" )
+            all_leaderboard.update()    
         
-        
+        def change_view(flag):
+            all_leaderboard.delete(0, tk.END)
+            daily_leaderboard.delete(0, tk.END)
+            if flag == True:
+                all_leaderboard_data.sort(key = lambda max_e: float(max_e[2]), reverse = True)
+                daily_leaderboard_data.sort(key = lambda max_e: float(max_e[2]), reverse = True)
+                
+                for rank, row in enumerate(daily_leaderboard_data, start=1):
+                    daily_leaderboard.insert(tk.END, f"{rank}. {row[0]} - Maximum Energy (J): {row[2]}")
+                    daily_leaderboard.update()
+                
+                for rank1, row1 in enumerate(all_leaderboard_data, start=1):
+                    all_leaderboard.insert(tk.END, f"{rank1}. {row1[0]} - Maximum Energy (J): {row1[2]}" )
+                    all_leaderboard.update() 
+                view_change.config(text = 'View Power') 
+                
+                
+            else:
+                all_leaderboard_data.sort(key = lambda max_p: float(max_p[1]), reverse = True)
+                daily_leaderboard_data.sort(key = lambda max_p: float(max_p[1]), reverse = True)
+                
+                for rank, row in enumerate(daily_leaderboard_data, start=1):
+                    daily_leaderboard.insert(tk.END, f"{rank}. {row[0]} - Maximum Power (W): {row[1]}")
+                    daily_leaderboard.update()
+                
+                for rank1, row1 in enumerate(all_leaderboard_data, start=1):
+                    all_leaderboard.insert(tk.END, f"{rank1}. {row1[0]} - Maximum Power (W): {row1[1]}" )
+                    all_leaderboard.update() 
+                view_change.config(text = 'View Energy')
+                 
+            
+            
         def up_lb():
             t_lb = threading.Thread(target=update_board)
             t_lb.start()
+        
+        def change():
+            t_change = threading.Thread(target = change_view(self.flag_v))
+            t_change.start()
+            self.flag_v = ~self.flag_v
              
-        update_leaderboard = tk.Button(self, text = 'Update', command = up_lb).pack()
-        back_to_comp = tk.Button(self, text = 'Competition Mode', command = lambda : controller.show_frame(CompMode)).pack()
-        button3 = tk.Button(self, text = "Quit", command = quit).place(x=1300, y=800)
-        jelly = tk.Label(self, text = 'ADD FOOD EQUIVALENT', font = 'Verdana 30').pack()
+        update_leaderboard = tk.Button(self, text = 'Update', command = up_lb)
+        update_leaderboard.place(relx = 0.5, rely = 0.08, anchor='center')
+        
+        view_change = tk.Button(self, text = 'View Energy', command = change)
+        view_change.place(relx = 0.5, rely = 0.15, anchor = 'center')
+        
+        back_to_comp = tk.Button(self, text = 'Competition Mode', command = lambda : controller.show_frame(CompMode))
+        back_to_comp.place(relx = 0.5, rely = 0.3, anchor='center')
+        
+        button3 = tk.Button(self, text = "Quit", command = quit)
+        button3.place(relx = 0.5, rely = 0.4, anchor='center')
+        
+        jelly = tk.Label(self, text = 'ADD FOOD EQUIVALENT', font = 'Verdana 30')
+        jelly.place(relx = 0.5, rely = 0.8, anchor='center')
+        
 
 # Need to write arduino code for Grid model mode first!!!!
 
