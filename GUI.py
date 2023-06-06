@@ -30,7 +30,7 @@ from matplotlib import style
 import threading
 import csv
 from datetime import date
-
+from PIL import ImageTk, Image
 import upload_difficulty
 
 ## @var filepath
@@ -74,7 +74,7 @@ class GUI(tk.Tk):
         self.frames = {}
        
         # iterate through a tuple with different pages
-        for F in (Home, CompMode,GraphPage, Leaderboard, Grid):
+        for F in (Home, CompMode, GraphPage, Leaderboard, Grid):
            
             frame = F(container, self)
            
@@ -109,6 +109,18 @@ class graph(tk.Canvas):
     # @param **kwargs Additional keyword arguments for the tkinter Canvas widget.
     def __init__(self, parent, title = '', ylabel = '', xlabel = '', label = '', ylim = 1, color = 'c',**kwargs):
         tk.Canvas.__init__(self, parent, **kwargs)
+        display_width = self.winfo_screenwidth()  # Width of your display
+        display_height = self.winfo_screenheight()  # Height of your display
+        
+        # Calculate scaling factors
+        width_scale = display_width / 1440  # Adjust as needed
+        height_scale = display_height / 900  # Adjust as needed
+        
+        # Calculate adjusted dimensions
+        adjusted_width = 11 * width_scale
+        adjusted_height = 7.5 * height_scale
+        adjusted_dpi = 50 * min(width_scale, height_scale)
+        
         self.data = []
         self.ylim = ylim
         self.color = color
@@ -116,7 +128,7 @@ class graph(tk.Canvas):
         self.title = title
         self.ylabel = ylabel
         self.xlabel = xlabel
-        self.fig = Figure(figsize=(11,7.5),dpi=50)
+        self.fig = Figure(figsize=(adjusted_width, adjusted_height),dpi=50)
         self.plot = self.fig.add_subplot(1,1,1)
         self.plot.set_title(title)
         self.plot.set_ylabel(ylabel)
@@ -222,14 +234,53 @@ class Home(tk.Frame):
         tk.Frame.__init__(self, parent)
         super(Home,  self).__init__(parent)
         
-        welcome = tk.Label(self, text='Welcome!', font='Verdana 30', fg='blue')
-        welcome.place(relx=0.5, rely=0.3, anchor='center')
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        button_width = int(screen_width * 0.0075)
+        button_height = int(screen_height * 0.0025)
+        button_font_size = int(screen_height * (36/1440))
+        welcome_font_size = int(screen_height * (40/1440))
+        
+        # Image dimensions when screen is 1440x900
+        target_width = 1151
+        target_height = 540
+        
+        welcome = tk.Label(self, text='Welcome!', font=('Verdana', welcome_font_size, 'bold'))
+        welcome.place(relx=0.5, rely=0.1, anchor='center')
+        
+        button = tk.Button(self, text='Competition Mode', command=lambda: controller.show_frame(CompMode), font=('Arial', button_font_size, 'bold'))
+        button.configure(width = button_width, height = button_height)
+        button.place(relx=0.25, rely=0.9, anchor='center')
 
-        button = tk.Button(self, text='Competition Mode', command=lambda: controller.show_frame(CompMode), font='Arial 12 bold')
-        button.place(relx=0.5, rely=0.5, anchor='center')
+        button2 = tk.Button(self, text='Grid Mode', command=lambda: controller.show_frame(Grid), font=('Arial', button_font_size, 'bold'))
+        button2.configure(width = button_width, height = button_height)
+        button2.place(relx=0.75, rely=0.9, anchor='center')
+        
+        # Add the image
+        image_path = 'ElectricalSystem.png'
 
-        button2 = tk.Button(self, text='Grid Mode', command=lambda: controller.show_frame(Grid), font='Arial 12 bold')
-        button2.place(relx=0.5, rely=0.6, anchor='center')
+        # Calculate the scale factor based on the screen size and target size
+        scale_factor = min(screen_width / 1440, screen_height / 900)
+
+        # Calculate the scaled size of the image
+        image_width = int(target_width * scale_factor)
+        image_height = int(target_height * scale_factor)
+
+        # Open the image
+        image = Image.open(image_path)
+
+        # Resize the image to the calculated size
+        image = image.resize((image_width, image_height), Image.LANCZOS)
+
+        # Create a PhotoImage object from the resized image
+        photo = ImageTk.PhotoImage(image)
+
+        # Create a label and assign the image to it
+        image_label = tk.Label(self, image=photo)
+        image_label.image = photo  # Keep a reference to prevent image from being garbage collected
+
+        # Place the label in the frame
+        image_label.place(relx=0.5, rely=0.45, anchor='center')
 
 ## @class CompMode
 # @brief A custom frame widget for the competition mode screen.
@@ -263,7 +314,7 @@ class CompMode(tk.Frame):
         button.place(relx=0.5, rely=0.5, anchor='center')
         
         button2 = tk.Button(self, text='Start Competition Mode', command=lambda: controller.show_frame(GraphPage),
-                            font='Verdana 12 bold', bg='green', fg='white')
+                    font='Verdana 12 bold', bg='dark green', fg='white')
         button2.place(relx=0.5, rely=0.6, anchor='center')
            
 ## @class GraphPage
@@ -283,36 +334,40 @@ class GraphPage(tk.Frame):
         self.count = 5
         self.time = 10
         
+        # Size scaling for Speed Meter
+        meter_scaling = min(self.winfo_screenheight() / 900, self.winfo_screenwidth() / 1440)
+        adjusted_radius = 260 * meter_scaling
         
-
+        # Size scaling for label frames
+        frame_height_scaling = self.winfo_screenheight() / 900
+        frame_width_scaling = self.winfo_screenwidth() / 1440
+        adjusted_height = frame_height_scaling * 100
+        adjusted_width = frame_width_scaling * 150
+        
         # For the current graph
         current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 3, color='c')
         current_canvas.place(x = 0.007 * self.winfo_screenwidth(), y = 0.056*self.winfo_screenheight())
-        #current_canvas.pack(expand=True, side=tk.LEFT)
         
         # For the voltage graph
         voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 60, color='g')
         voltage_canvas.place(x = 0.007 * self.winfo_screenwidth(), y = 0.5 * self.winfo_screenheight())
-        #voltage_canvas.pack(expand=True, side=tk.TOP)
         
         # For the power graph
         power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 150, color='b')
         power_canvas.place(x = 0.417 * self.winfo_screenwidth(), y = 0.056 * self.winfo_screenheight())
-        #power_canvas.pack(expand=True, side=tk.LEFT)
         
-        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height= 100, width=150).place(relx=0.694, rely=0.667)
-        
+        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height = adjusted_height, width = adjusted_width).place(relx=0.694, rely=0.667)
         
         energy = EnergyLabel(energy_frame)
-        energy.place(relx=0.8, rely=0.7)         # energy_frames x+40 and y+30 from trial and error
+        energy.place(relx=0.5, rely=0.5)
         
-        timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = 100, width = 140)
+        timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = adjusted_height, width = adjusted_width)
         timer_frame.place(relx=0.833, rely=0.111)
         
         timer_label = tk.Label(timer_frame, text='5', font='Verdana 30')
         timer_label.place(relx = 0.5, rely = 0.45, anchor = 'center')
         
-        speed = Meter(self, radius=260, start=0, end=90, border_width=0,
+        speed = Meter(self, radius=adjusted_radius, start=0, end=90, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
                text_font="DS-Digital 30", scale_color="white", needle_color="red")
         
@@ -475,11 +530,11 @@ class Leaderboard(tk.Frame):
                 daily_leaderboard_data.sort(key = lambda max_e: float(max_e[2]), reverse = True)
                 
                 for rank, row in enumerate(daily_leaderboard_data, start=1):
-                    daily_leaderboard.insert(tk.END, f"{rank}. {row[0]} - Maximum Energy (J): {row[2]}")
+                    daily_leaderboard.insert(tk.END, f"{rank}. {row[0]} - Cumulative Energy (J): {row[2]}")
                     daily_leaderboard.update()
                 
                 for rank1, row1 in enumerate(all_leaderboard_data, start=1):
-                    all_leaderboard.insert(tk.END, f"{rank1}. {row1[0]} - Maximum Energy (J): {row1[2]}" )
+                    all_leaderboard.insert(tk.END, f"{rank1}. {row1[0]} - Cumulative Energy (J): {row1[2]}" )
                     all_leaderboard.update() 
                 view_change.config(text = 'View Power') 
                 
@@ -496,7 +551,6 @@ class Leaderboard(tk.Frame):
                     all_leaderboard.insert(tk.END, f"{rank1}. {row1[0]} - Maximum Power (W): {row1[1]}" )
                     all_leaderboard.update() 
                 view_change.config(text = 'View Energy')
-                 
             
             
         def up_lb():
@@ -517,12 +571,14 @@ class Leaderboard(tk.Frame):
         back_to_comp = tk.Button(self, text = 'Competition Mode', command = lambda : controller.show_frame(CompMode))
         back_to_comp.place(relx = 0.5, rely = 0.3, anchor='center')
         
+        back_to_home = tk.Button(self, text = 'Home', command = lambda : controller.show_frame(Home))
+        back_to_home.place(relx = 0.5, rely = 0.35, anchor = 'center')
+        
         button3 = tk.Button(self, text = "Quit", command = quit)
         button3.place(relx = 0.5, rely = 0.4, anchor='center')
         
-        jelly = tk.Label(self, text = 'ADD FOOD EQUIVALENT', font = 'Verdana 30')
-        jelly.place(relx = 0.5, rely = 0.8, anchor='center')
-        
+        #jelly = tk.Label(self, text = 'ADD FOOD EQUIVALENT', font = 'Verdana 30')
+       # jelly.place(relx = 0.5, rely = 0.8, anchor='center')
 
 # Need to write arduino code for Grid model mode first!!!!
 
@@ -539,17 +595,21 @@ class Grid(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         super(Grid, self).__init__(parent)  
+        
+        # Size scaling for Speed Meter
+        meter_scaling = min(self.winfo_screenheight() / 900, self.winfo_screenwidth() / 1440)
+        adjusted_radius = 260 * meter_scaling
+        
+        speed = Meter(self, radius=adjusted_radius, start=0, end=90, border_width=0,
+               fg="black", text_color="white", start_angle=270, end_angle=-270,
+               text_font="DS-Digital 30", scale_color="white", needle_color="red")
     
        # Wind = tk.LabelFrame(self, text = 'Wind Generation (W)').pack()
        # Wind_p = tk.Label(Wind, text = '10.4 W').pack()
         
        # Solar = tk.LabelFrame(self, text = 'Solar Generation').pack()
-       # Solar_p = tk.Label(Solar, text = '7.4 W').pack()
-        
-        
-        
+       # Solar_p = tk.Label(Solar, text = '7.4 W').pack()   
     
 # Driver code
 app = GUI()
-app.mainloop()
- 
+app.mainloop()    
