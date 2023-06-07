@@ -4,16 +4,16 @@
  */
 #include <FastLED.h>
 
-#define Voltage_In_Pin A1   // Pin to sense voltage transducer output
-#define Current_In_Pin A5   // Pin to sense current transducer output
+#define Voltage_In_Pin A0   // Pin to sense voltage transducer output
+#define Current_In_Pin A2   // Pin to sense current transducer output
 #define PWM_Pin 2           // Pin to do PWM switiching on the mosfet
-#define LED_PIN 8           // Pin that controls the LED strip
+#define LED_PIN 13           // Pin that controls the LED strip
 #define NUM_LEDS 60         // Number of LEDs on the LED strip
 
 CRGB leds[NUM_LEDS];        // Initialising the LED strip
 
 // Pins for 3 way dial that controls the difficulty level
-const int D_OUT[4] = {44, 40, 36, 32};  // Pins used to supply 5V to 3 way dial
+const int D_OUT[4] = {23, 25, 27, 29};  // Pins used to supply 5V to 3 way dial
 const int D_READ[4] = {42, 38, 34, 30}; // Pins used to read the state of the 3 way dial
 
 bool state[4] = {0,0,0,0};  // variable to store the states of eacher 3 way dial pin 
@@ -45,10 +45,10 @@ float difficulty(){
   state[3] = digitalRead(D_READ[3]);
 
   if(state[0] == HIGH && state[3] == HIGH){
-    return 1;
+    return 0.3;
   }
   else if(state[1] == HIGH && state[2] == HIGH){
-    return 0.3;
+    return 1;
   }
   else{
     return 0.6;
@@ -71,8 +71,8 @@ float SampleCurrent(int duration) {
   float sample_time = 0.2;
   float samples = duration / sample_time;
 
-  float starttime = millis();
-  float endtime = starttime;
+  unsigned long starttime = millis();
+  unsigned long endtime = starttime;
 
   while((endtime - starttime) <= duration){
     adc_value = analogRead(Current_In_Pin);
@@ -123,7 +123,7 @@ float SampleVoltage(int duration) {
  */
 void cycle(int runtime, float duty){
 
-  Serial.println("0,0,0,0,0");
+  //Serial.println("0,0,0,0,0");
   unsigned long stime = millis();
   float t_on = duty * pwm_period;
   float t_off = pwm_period - t_on;
@@ -179,13 +179,12 @@ void cycle(int runtime, float duty){
 
     cum_energy = cum_energy + energy;
 
-    val = map(avg_voltage, 0, 50, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
+    val = map(avg_voltage, 0, 100, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
     for(int i = 0; i < val; i++){
-      leds[i] = CRGB::Blue;
+      leds[i] = CRGB::Red;
       FastLED.show();
     }
 
-    // Here data is sent to the Python script using serial communication
     Serial.print(avg_current, 2); Serial.print(","); Serial.print(avg_voltage, 2); Serial.print(","); Serial.print(inst_power, 2);
     Serial.print(","); Serial.print(cum_energy, 2); Serial.print(","); Serial.print(frequency, 1); /*Serial.print(","); Serial.print(remaining, 1)*/;
     Serial.println("");
@@ -207,7 +206,7 @@ void setup() {
 
   Serial.begin(9600);
   //analogReference(EXTERNAL);
-  delay(800);
+  //delay(800);
   cycle(10000, duty_cycle);
   digitalWrite(PWM_Pin, HIGH);
   val = map(max_voltage, 0, 150, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
