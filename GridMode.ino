@@ -69,8 +69,6 @@ void loop() {
   else {
     wind_state = 0;
   }
-  //Serial.println(solar_voltage);  
-  //Serial.println(wind_voltage);
   int state_ES = 0;
   int state[3] = {0,0,0}; // initialises the current state of the interactive and emergency stop pushbuttons to zero
   int state_renewables = 0;
@@ -131,7 +129,6 @@ if (load >= 0){
     delay(t_on);
     digitalWrite(MOSFET, LOW);
     delay(t_off);
-    //Serial.println(duty_cycle);
   }
 else{
   if(solar_flag == HIGH) {
@@ -145,9 +142,9 @@ else{
   float t_off= (1- (duty_cycle)) * time_period;
     digitalWrite(MOSFET,  LOW);
     delay(time_period);
-    //Serial.println(duty_cycle);
   }
   checkSpeed(old_freq);
+ Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
 }
 
 void freq(unsigned long t1, unsigned long t2){
