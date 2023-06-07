@@ -1,4 +1,4 @@
-const int pushButton[3] = {3,4,5}; // digital pins for interactive loads and emergency stop
+const int pushButton[3] = {5,4,3}; // digital pins for interactive loads and emergency stop
 const int pushButton_ES = 6;
 const int pushButton_Renewables = 7; // didgtal pins for renewables push button
 const int SSRPin[3] = {8,9,10}; // digital pins for solid state relay channels.
@@ -6,6 +6,7 @@ const int SSR_ES = 11;
 int pushbuttonState[3] = {0,0,0}; //checks current status of the pushbutton for interactive loads and emergency stop
 int pushbuttonState_ES = 1;
 int pushbuttonState_renewables = 0;
+int PushbuttonStatus_renewables = 0;
 int SSRStatus[3] = {HIGH,HIGH,HIGH}; // stores current status of the SSR
 int SSR_Status_ES = HIGH;
 int PushbuttonStatus = HIGH;// stores current status of the Pushbuttons for renewables
@@ -18,6 +19,7 @@ const int MOSFET = 2;
 int hall_sensor = 0;
 unsigned long t1 = 0; // previous time value
 unsigned long t2 = 0; // new time value
+float duty_cycle = 0;
 float frequency = 0;
 bool flag = LOW;
 
@@ -27,7 +29,7 @@ const int time_period = 200; // PWM time period
 const int FIVEWATT_Led = 2;
 const int SEVENWATT_Motor = 3;
 const int FOURTYWATT_Bulb = 5;
-const int solar = 3;
+const int solar = 9;
 const int wind = 3;
 unsigned long timerStart = 0; // start time for frequency monitoring
 const unsigned long timerDelay = 5000; // 5-second delay for frequency monitoring
@@ -55,8 +57,8 @@ void loop() {
   bool solar_flag = LOW;
   bool wind_flag = LOW;
   load = 0;
-  float solar_voltage = analogRead(A0)*5*5.0/1023;     //PV panel voltage
-  if(solar_voltage > 7) {
+  float solar_voltage = analogRead(A4)*5*5.0/1023;     //PV panel voltage
+  if(solar_voltage > 13) {
     solar_state = 1;
   }
   else{
@@ -98,10 +100,10 @@ void loop() {
       }
     }
     state_renewables = digitalRead(pushButton_Renewables);
-    if(state_renewables == HIGH && pushbuttonState_renewables == LOW) {
-        pushbuttonState_renewables = !pushbuttonState_renewables;
-      }
-      pushbuttonState_renewables = state_renewables;
+    if(state_renewables == HIGH && PushbuttonStatus_renewables == LOW) {
+      pushbuttonState_renewables = 1-pushbuttonState_renewables;
+    }
+    PushbuttonStatus_renewables = state_renewables;
   
     if(pushbuttonState[0] == HIGH) {
       load = load + FIVEWATT_Led; // 5 w bulb added to load variable
@@ -112,7 +114,7 @@ void loop() {
     if(pushbuttonState[2] == HIGH) {
       load = load + FOURTYWATT_Bulb; // 40 w bulb added to load variable
     }
-    if(pushbuttonState_renewables == HIGH && solar_state == HIGH) {
+    if(/*pushbuttonState_renewables == HIGH &&*/ solar_state == HIGH) {
       load = load - solar;
       solar_flag = HIGH;
     }
@@ -122,7 +124,7 @@ void loop() {
     }
   // PWM code
 if (load >= 0){
-  float duty_cycle = float(load)/10;
+  duty_cycle = float(load)/10;
   float t_on= duty_cycle * time_period;
   float t_off= (1- (duty_cycle)) * time_period;
     digitalWrite(MOSFET,  HIGH);
@@ -137,14 +139,16 @@ else{
   if(wind_flag == HIGH) {
     load = load + wind;
   }
-  float duty_cycle = float(load)/10;
+  duty_cycle = float(load)/10;
   float t_on= duty_cycle * time_period;
   float t_off= (1- (duty_cycle)) * time_period;
     digitalWrite(MOSFET,  LOW);
     delay(time_period);
   }
   checkSpeed(old_freq);
- Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
+  //Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
+  Serial.println(duty_cycle, 1);
+  Serial.println(old_freq,0);
 }
 
 void freq(unsigned long t1, unsigned long t2){
@@ -153,7 +157,7 @@ void freq(unsigned long t1, unsigned long t2){
     frequency = old_freq;
   }
   old_freq = frequency;
-  Serial.println(frequency);
+  //Serial.println(frequency);
   if(frequency >= 45 && frequency <= 55){
     startFlag = true;
     timerFlag = timerFlag + 1;
