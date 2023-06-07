@@ -142,7 +142,7 @@ class graph(tk.Canvas):
     def update_graph(self, i):
         if self.data:
             self.line.set_data(range(len(self.data)), self.data)
-            self.plot.set_xlim(0, len(self.data))
+            self.plot.set_xlim(0, (2*len(self.data)/7))
             #self.plot.set_ylim(0, max(self.data))
     
     ## @brief Sets a new data value for the graph.
@@ -409,16 +409,16 @@ class GraphPage(tk.Frame):
         adjusted_width = frame_width_scaling * 150
         
         # For the current graph
-        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 3, color='c')
+        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 10, color='c')
         current_canvas.configure(borderwidth = 10, relief = 'solid')
         current_canvas.place(x = 0.007 * screen_width, y = 0.056*screen_height)
         
         # For the voltage graph
-        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 60, color='g')
+        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 100, color='g')
         voltage_canvas.place(x = 0.007 * screen_width, y = 0.5 * screen_height)
         
         # For the power graph
-        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 150, color='b')
+        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 250, color='b')
         power_canvas.place(x = 0.417 * screen_width, y = 0.056 * screen_height)
         
         energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height = adjusted_height, width = adjusted_width, font = ('Verdana', frame_font_size)).place(relx=0.694, rely=0.667)
@@ -434,14 +434,14 @@ class GraphPage(tk.Frame):
         
         speed_meter_title = tk.Label(self, text = "Electrical Frequency (Hz)", font = ('Verdana', speed_title_size)).place(relx = 0.5, rely = 0.53, anchor = 'center')
         
-        speed = Meter(self, radius=adjusted_radius, start=0, end=90, border_width=0,
+        speed = Meter(self, radius=adjusted_radius, start=0, end=150, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
                text_font="DS-Digital 30", scale_color="white", needle_color="red")
         
         speed.place(relx=0.417, rely = 0.556)
         
         def get_data():
-            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/4th_Year_Project/Code/Arduino/V_C -u -p /dev/cu.usbmodem1301')
+            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/Arduino/C_Mode_Working -u -p /dev/cu.usbmodem1301')
             ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
             global max_power
             global cum_energy # variable to store cumulative energy for the leaderboard
