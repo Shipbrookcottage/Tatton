@@ -42,10 +42,6 @@ filepath = 'data.csv'
 def pause():
     os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/4th_Year_Project/Code/Arduino/Difficulty -u -p /dev/cu.usbmodem1301')
 
-## @var LARGEFONT
-# Variable that represents the font style for large text.
-LARGEFONT = ("Verdana", 35)
-
 ## @var style
 # Variable that represents the style used by matplotlib for plotting.
 style.use('fivethirtyeight')
@@ -88,8 +84,6 @@ class GUI(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
    
-    # Start Page setup
-
 
 ## @class graph
 # @brief A custom graph widget that extends the tkinter Canvas widget.
@@ -185,7 +179,10 @@ class EnergyLabel(tk.Label):
     # @param **kwargs Additional keyword arguments for the tkinter Label widget.
     def __init__(self, parent, **kwargs):
         tk.Label.__init__(self, parent, **kwargs)
-        self.label_energy = tk.Label(self, font='Verdana 30')
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        font_size = int(screen_height * (50/1440))
+        self.label_energy = tk.Label(self, font = ('Verdana', font_size))
         self.label_energy.pack()
     
     ## @brief Sets the energy value to be displayed.
@@ -198,6 +195,58 @@ class EnergyLabel(tk.Label):
         self.place(relx=0.73, rely=0.7)  
     
     ## @brief Hides the energy label.
+    def hide(self):
+        self.place_forget()
+        
+class WindLabel(tk.Label):
+    ## @brief Initializes an WindLabel object.
+    # @param parent The parent tkinter widget for the wind label.
+    # @param **kwargs Additional keyword arguments for the tkinter Label widget.
+    def __init__(self, parent, **kwargs):
+        tk.Label.__init__(self, parent, **kwargs)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        font_size = int(screen_height * (100/1440))
+        
+        self.label_wind = tk.Label(self, font = ('Verdana', font_size))
+        self.label_wind.pack()
+    
+    ## @brief Sets the wind value to be displayed.
+    # @param value The wind value.
+    def setW(self, value):
+        self.label_wind.config(text=value)
+        
+    ## @brief Shows the wind label.
+    def show(self):
+        self.place(relx=0.2, rely=0.5, anchor = 'center')  
+    
+    ## @brief Hides the wind label.
+    def hide(self):
+        self.place_forget()
+        
+class SolarLabel(tk.Label):
+    ## @brief Initializes an SolarLabel object.
+    # @param parent The parent tkinter widget for the solar label.
+    # @param **kwargs Additional keyword arguments for the tkinter Label widget.
+    def __init__(self, parent, **kwargs):
+        tk.Label.__init__(self, parent, **kwargs)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        font_size = int(screen_height * (100/1440))
+        
+        self.label_solar = tk.Label(self, font = ('Verdana', font_size))
+        self.label_solar.pack()
+    
+    ## @brief Sets the solar value to be displayed.
+    # @param value The solar value.
+    def setS(self, value):
+        self.label_solar.config(text=value)
+        
+    ## @brief Shows the solar label.
+    def show(self):
+        self.place(relx=0.8, rely=0.5, anchor = 'center')  
+    
+    ## @brief Hides the solar label.
     def hide(self):
         self.place_forget()
         
@@ -296,25 +345,30 @@ class CompMode(tk.Frame):
         tk.Frame.__init__(self, parent)
         super(CompMode,  self).__init__(parent)
         
-        welcome = tk.Label(self, text='Welcome to the Competition Mode!', font='Verdana 30', fg='blue')
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        welcome_font_size = int(screen_height * (30/1440))
+        text_font_size = int(screen_height * (12/1440))
+        
+        welcome = tk.Label(self, text='Welcome to the Competition Mode!', font = ('Verdana', welcome_font_size))
         welcome.place(relx=0.5, rely=0.3, anchor='center')
         
-        usernameLabel = tk.Label(self, text="User Name", font='Verdana 12 bold', fg='black')
+        usernameLabel = tk.Label(self, text="User Name", font = ('Verdana', text_font_size, 'bold'))
         usernameLabel.place(relx=0.5, rely=0.4, anchor='center')
         
         global username
         username = tk.StringVar()
-        usernameEntry = tk.Entry(self, textvariable=username, font='Verdana 12')
+        usernameEntry = tk.Entry(self, textvariable=username, font = ('Verdana', text_font_size))
         usernameEntry.place(relx=0.5, rely=0.45, anchor='center')
         
         def onClick():
             tkinter.messagebox.showinfo('Demo', 'Username Saved!')
             
-        button = tk.Button(self, text='Enter', command=onClick, font='Verdana 12', bg='lightblue', fg='black')
+        button = tk.Button(self, text='Enter', command=onClick, font = ('Verdana', text_font_size), bg='lightblue', fg='black')
         button.place(relx=0.5, rely=0.5, anchor='center')
         
         button2 = tk.Button(self, text='Start Competition Mode', command=lambda: controller.show_frame(GraphPage),
-                    font='Verdana 12 bold', bg='dark green', fg='white')
+                    font = ('Verdana', text_font_size))
         button2.place(relx=0.5, rely=0.6, anchor='center')
            
 ## @class GraphPage
@@ -331,41 +385,54 @@ class GraphPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         super(GraphPage, self).__init__(parent)
         
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        button_width = int(screen_width * 0.0075)
+        button_height = int(screen_height * 0.0025)
+        frame_font_size = int(screen_height * (20 / 1440))
+        button_font_size = int(screen_height * (36 / 1440))
+        welcome_font_size = int(screen_height * (40 / 1440))
+        timer_font_size = int(screen_height * (50 / 1440))
+        speed_title_size = int(screen_height * (20 / 1440))
+        
         self.count = 5
         self.time = 10
         
         # Size scaling for Speed Meter
-        meter_scaling = min(self.winfo_screenheight() / 900, self.winfo_screenwidth() / 1440)
-        adjusted_radius = 260 * meter_scaling
+        meter_scaling = min(screen_height / 900, screen_width / 1440)
+        adjusted_radius = 260 * meter_scaling # 260 is the radius at 1440 and 900
         
         # Size scaling for label frames
-        frame_height_scaling = self.winfo_screenheight() / 900
-        frame_width_scaling = self.winfo_screenwidth() / 1440
+        frame_height_scaling = screen_height / 900
+        frame_width_scaling = screen_width / 1440
         adjusted_height = frame_height_scaling * 100
         adjusted_width = frame_width_scaling * 150
         
         # For the current graph
         current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 3, color='c')
-        current_canvas.place(x = 0.007 * self.winfo_screenwidth(), y = 0.056*self.winfo_screenheight())
+        current_canvas.configure(borderwidth = 10, relief = 'solid')
+        current_canvas.place(x = 0.007 * screen_width, y = 0.056*screen_height)
         
         # For the voltage graph
         voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 60, color='g')
-        voltage_canvas.place(x = 0.007 * self.winfo_screenwidth(), y = 0.5 * self.winfo_screenheight())
+        voltage_canvas.place(x = 0.007 * screen_width, y = 0.5 * screen_height)
         
         # For the power graph
         power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 150, color='b')
-        power_canvas.place(x = 0.417 * self.winfo_screenwidth(), y = 0.056 * self.winfo_screenheight())
+        power_canvas.place(x = 0.417 * screen_width, y = 0.056 * screen_height)
         
-        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height = adjusted_height, width = adjusted_width).place(relx=0.694, rely=0.667)
+        energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height = adjusted_height, width = adjusted_width, font = ('Verdana', frame_font_size)).place(relx=0.694, rely=0.667)
         
         energy = EnergyLabel(energy_frame)
         energy.place(relx=0.5, rely=0.5)
         
-        timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = adjusted_height, width = adjusted_width)
+        timer_frame = tk.LabelFrame(self, text='Countdown (s)', height = adjusted_height, width = adjusted_width, font = ('Verdana', frame_font_size))
         timer_frame.place(relx=0.833, rely=0.111)
         
-        timer_label = tk.Label(timer_frame, text='5', font='Verdana 30')
+        timer_label = tk.Label(timer_frame, text='5', font=('Verdana', timer_font_size))
         timer_label.place(relx = 0.5, rely = 0.45, anchor = 'center')
+        
+        speed_meter_title = tk.Label(self, text = "Electrical Frequency (Hz)", font = ('Verdana', speed_title_size)).place(relx = 0.5, rely = 0.53, anchor = 'center')
         
         speed = Meter(self, radius=adjusted_radius, start=0, end=90, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
@@ -451,11 +518,11 @@ class GraphPage(tk.Frame):
             power_canvas.clear()
         
         
-        button1 = tk.Button(self, text="Start", command = start).place(relx=0.903, rely=0.778)
+        button1 = tk.Button(self, text="Start", command = start).place(relx=0.9, rely=0.75)
         
-        button2 = tk.Button(self, text="Leaderboard", command = deletetext).place(relx=0.903, rely=0.833)
+        button2 = tk.Button(self, text="Leaderboard", command = deletetext).place(relx=0.9, rely=0.8)
         
-        button3 = tk.Button(self, text = "Quit", command = quit).place(relx=0.903, rely=0.889)
+        button3 = tk.Button(self, text = "Quit", command = quit).place(relx=0.9, rely=0.85)
 
 ## @class Leaderboard
 # @brief A custom frame widget for displaying a leaderboard.
@@ -472,10 +539,14 @@ class Leaderboard(tk.Frame):
         super(Leaderboard, self).__init__(parent)
         
         # Styling options
-        title_font = ("Arial", 25, "bold")
-        listbox_font = ("Arial", 20)
-        listbox_width = int((50/1440)*self.winfo_screenwidth())
-        listbox_height = int((20/900)*self.winfo_screenmmheight())
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        font_scaling = screen_height / 1440
+        
+        title_font = ("Arial", int(25 * font_scaling), "bold")
+        listbox_font = ("Arial", int(20 * font_scaling))
+        listbox_width = int((50/1440) * screen_width)
+        listbox_height = int((20/900) * self.winfo_screenmmheight())
         
         # Flag to check state of leaderboard view
         self.flag_v = True
@@ -594,21 +665,82 @@ class Grid(tk.Frame):
     # @param controller The controller object for managing frame transitions.
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        super(Grid, self).__init__(parent)  
+        super(Grid, self).__init__(parent) 
+        
+        screen_height = self.winfo_screenheight()
+        screen_width = self.winfo_screenwidth()
+        font_scaling = screen_height / 1440
+        speed_title_size = int(20 * font_scaling)
         
         # Size scaling for Speed Meter
-        meter_scaling = min(self.winfo_screenheight() / 900, self.winfo_screenwidth() / 1440)
-        adjusted_radius = 260 * meter_scaling
+        meter_scaling = min(screen_height / 900, screen_width / 1440)
+        adjusted_radius = 360 * meter_scaling
+        
+        # Size scaling for label frames
+        frame_height_scaling = screen_height / 900
+        frame_width_scaling = screen_width / 1440
+        border_thickness = 10 * min(screen_height / 900, screen_width / 1440)
+        adjusted_height = frame_height_scaling * 200
+        adjusted_width = frame_width_scaling * 300
+        
+        wind_frame = tk.LabelFrame(self, text='Wind Turbine Voltage (V)', height = adjusted_height, width = adjusted_width, borderwidth = border_thickness).place(relx=0.1, rely=0.5, anchor = 'w')
+        
+        wind = WindLabel(wind_frame)
+        
+        solar_frame = tk.LabelFrame(self, text='Solar Panel Voltage (V)', height = adjusted_height, width = adjusted_width, borderwidth = border_thickness).place(relx=0.9, rely=0.5, anchor = 'e')
+        
+        solar = SolarLabel(solar_frame)
+        
+        speed_meter_title = tk.Label(self, text = "Electrical Frequency (Hz)", font = ('Verdana', speed_title_size)).place(relx = 0.5, rely = 0.53, anchor = 'center')
         
         speed = Meter(self, radius=adjusted_radius, start=0, end=90, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
                text_font="DS-Digital 30", scale_color="white", needle_color="red")
-    
-       # Wind = tk.LabelFrame(self, text = 'Wind Generation (W)').pack()
-       # Wind_p = tk.Label(Wind, text = '10.4 W').pack()
+        speed.set_mark(55, 90, 'red')
+        speed.set_mark(45, 55, 'green')
+        speed.set_mark(0, 45, 'yellow')
+        speed.place(relx = 0.5, rely = 0.5, anchor = 'center')
         
-       # Solar = tk.LabelFrame(self, text = 'Solar Generation').pack()
-       # Solar_p = tk.Label(Solar, text = '7.4 W').pack()   
+        def get_data_grid():
+            os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/4th_Year_Project/Code/Arduino/TestGrid -u -p /dev/cu.usbmodem1301')
+            ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
+            while True:
+                try:
+                    pulldata = ser.readline()
+                    string = pulldata.decode()
+                    stripped_string = string.strip()
+                    get_data = stripped_string.split(',')
+                    if(get_data[0] != 'DONE'):
+                        speed.set(float(get_data[0]))
+                        wind.setW(float(get_data[1]))
+                        solar.setS(float(get_data[2])) 
+                    else:
+                        pause
+                        break
+                except ValueError:
+                    pause
+                    break
+                
+        def start():  
+            speed.set(0)
+            wind.setW(0)
+            wind.show()
+            solar.setS(0)
+            solar.show()
+            
+            t = threading.Thread(target=get_data_grid)   
+            t.start()
+        
+        def back_to_home():
+            wind.hide()
+            solar.hide()
+            controller.show_frame(Home)
+            
+        button1 = tk.Button(self, text="Start", command = start).place(relx=0.9, rely=0.8)
+        
+        button2 = tk.Button(self, text = "Back to Home", command = back_to_home).place(relx = 0.9, rely = 0.85)
+        
+        button3 = tk.Button(self, text = "Quit", command = quit).place(relx=0.9, rely=0.9)
     
 # Driver code
 app = GUI()
