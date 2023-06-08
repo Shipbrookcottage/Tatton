@@ -1,43 +1,170 @@
-const int pushButton[3] = {5,4,3}; // digital pins for interactive loads and emergency stop
-const int pushButton_ES = 6;
-const int pushButton_Renewables = 7; // didgtal pins for renewables push button
-const int SSRPin[3] = {8,9,10}; // digital pins for solid state relay channels.
-const int SSR_ES = 11;
-int pushbuttonState[3] = {0,0,0}; //checks current status of the pushbutton for interactive loads and emergency stop
-int pushbuttonState_ES = 1;
-int pushbuttonState_renewables = 0;
-int PushbuttonStatus_renewables = 0;
-int SSRStatus[3] = {HIGH,HIGH,HIGH}; // stores current status of the SSR
-int SSR_Status_ES = HIGH;
-int PushbuttonStatus = HIGH;// stores current status of the Pushbuttons for renewables
-int SSRON = HIGH; //high trigger signal to turn SSR on
-int SSROFF = LOW; // low trigger signal to turn SSR off
-int solar_state = 0; // checks if the the solar panel is switched on
-int wind_state = 0; // checks if the wind turbine is switched on
-const int MOSFET = 2;
-#define Digital_In_Pin 18 //defines pin for hall sensor
-int hall_sensor = 0;
-unsigned long t1 = 0; // previous time value
-unsigned long t2 = 0; // new time value
-float duty_cycle = 0;
-float frequency = 0;
-bool flag = LOW;
+/**
+ * @file
+ * This is the code for the competition mode as of 7/6/2023.
+ */
 
+/**
+ * @brief Digital pins for interactive loads pushbutton.
+ */
+const int pushButton[3] = {5, 4, 3};
+/**
+ * @brief Pushbutton for the Emergency Stop button.
+ */
+const int pushButton_ES = 6;
+
+/**
+ * @brief Digital pins for renewables push button.
+ */
+const int pushButton_Renewables = 7;
+
+/**
+ * @brief Digital pins for solid state relay channels.
+ */
+const int SSRPin[3] = {8, 9, 10};
+
+/**
+ * @brief Digital Pins for emergency stop SSR.
+ */
+const int SSR_ES = 11;
+
+/**
+ * @brief Checks current status of the pushbutton for interactive loads and emergency stop.
+ */
+int pushbuttonState[3] = {0, 0, 0};
+/**
+ * @brief Checks current status of the emergency stop pushbutton.
+ */
+int pushbuttonState_ES = 1;
+
+/**
+ * @brief Checks current status of the pushbutton for renewables.
+ */
+int pushbuttonState_renewables = 0;
+
+/**
+ * @brief Stores current status of the SSR.
+ */
+int SSRStatus[3] = {HIGH, HIGH, HIGH};
+
+/**
+ * @brief Stores current status of the emergency stop SSR.
+ */
+int SSR_Status_ES = HIGH;
+
+/**
+ * @brief Stores current status of the Pushbuttons for renewables.
+ */
+int PushbuttonStatus = HIGH;
+
+/**
+ * @brief High trigger signal to turn SSR on.
+ */
+int SSRON = HIGH;
+
+/**
+ * @brief Low trigger signal to turn SSR off.
+ */
+int SSROFF = LOW;
+
+/**
+ * @brief Checks if the solar panel is switched on.
+ */
+int solar_state = 0;
+
+/**
+ * @brief Checks if the wind turbine is switched on.
+ */
+int wind_state = 0;
+
+/**
+ * @brief Pin for the MOSFET.
+ */
+const int MOSFET = 2;
+/**
+ * @brief Defines pin for hall sensor.
+ */
+#define Digital_In_Pin 18
+
+/**
+ * @brief Hall sensor value.
+ */
+int hall_sensor = 0;
+
+/**
+ * @brief Previous time value for frequency measurement.
+ */
+unsigned long t1 = 0;
+
+/**
+ * @brief New time value for frequency measurement.
+ */
+unsigned long t2 = 0;
+
+/**
+ * @brief Duty cycle for PWM.
+ */
+float duty_cycle = 0;
+
+/**
+ * @brief Frequency value.
+ */
+float frequency = 0;
+
+/**
+ * @brief Flag for calculating frequency.
+ */
+bool freq_flag = LOW;
+
+/**
+ * @brief Previous frequency value.
+ */
 float old_freq = 0;
+
+/**
+ * @brief Total load value.
+ */
 int load = 0;
-const int time_period = 200; // PWM time period
+
+/**
+ * @brief PWM time period.
+ */
+const int time_period = 200;
+/**
+ * @brief Load values for different components.
+ */
 const int FIVEWATT_Led = 2;
 const int SEVENWATT_Motor = 3;
 const int FOURTYWATT_Bulb = 5;
-const int solar = 3;
-const int wind = 3;
-unsigned long timerStart = 0; // start time for frequency monitoring
-const unsigned long timerDelay = 5000; // 5-second delay for frequency monitoring
-bool loadPowerOff = false; // flag to track if loads need to be powered off
+const int solar = 4;
+const int wind = 4;
+
+/**
+ * @brief Start time for frequency monitoring.
+ */
+unsigned long timerStart = 0;
+
+/**
+ * @brief Delay for frequency monitoring.
+ */
+const unsigned long timerDelay = 5000;
+/**
+ * @brief Flag to track if loads need to be powered off.
+ */
+bool loadPowerOff = false;
+
+/**
+ * @brief Flag to indicate if the system has started.
+ */
 bool startFlag = false;
+
+/**
+ * @brief Timer flag for frequency monitoring.
+ */
 int timerFlag = 0;
 
-
+/**
+ * @brief Setup function called once at the start.
+ */
 void setup() {
   Serial.begin(9600);
   for(int i=0;i<3;i++) {
@@ -53,6 +180,10 @@ void setup() {
   digitalWrite(MOSFET, LOW);
   attachInterrupt(digitalPinToInterrupt(Digital_In_Pin),frequency_func,FALLING); // attaches interrupt for Hall sensor pin
 }
+
+/**
+ * @brief Main loop function.
+ */
 void loop() {
   bool solar_flag = LOW;
   bool wind_flag = LOW;
@@ -146,11 +277,15 @@ else{
     delay(time_period);
   }
   checkSpeed(old_freq);
-  //Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
-  Serial.println(duty_cycle, 1);
-  Serial.println(old_freq,0);
+  Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
 }
 
+/**
+ * @brief Calculate frequency based on time intervals.
+ *
+ * @param t1 The previous time value.
+ * @param t2 The new time value.
+ */
 void freq(unsigned long t1, unsigned long t2){
   float frequency = ((1000/((float)t2-(float)t1))/2)*6; //milliseconds
   if(frequency > 1.5*old_freq && frequency>60) {
@@ -158,12 +293,17 @@ void freq(unsigned long t1, unsigned long t2){
   }
   old_freq = frequency;
   //Serial.println(frequency);
-  if(frequency >= 45 && frequency <= 55){
+  if(frequency >= 40 && frequency <= 60){
     startFlag = true;
     timerFlag = timerFlag + 1;
   }
 }
 
+/**
+ * @brief Check the speed and control the load power accordingly.
+ *
+ * @param frequency The current frequency value.
+ */
 void checkSpeed(float frequency){
 
   if(timerFlag == 1){
@@ -187,6 +327,9 @@ void checkSpeed(float frequency){
   }
 }
 
+/**
+ * @brief Turn off all the loads.
+ */
 void TurnOff(){
   Serial.println("DONE");
   for (int i = 0; i < 3; i++) {
@@ -198,14 +341,17 @@ void TurnOff(){
   }
 }
 
+/**
+ * @brief Interrupt service routine for frequency measurement.
+ */
 void frequency_func() {
-  if(flag == LOW){
+  if(freq_flag == LOW){
     t1 = millis();
-    flag = HIGH;
+    freq_flag = HIGH;
   }
   else{
     t2 = millis();
     freq(t1, t2);
-    flag = LOW;
+    freq_flag = LOW;
   }
 }
