@@ -13,11 +13,6 @@ const int pushButton[3] = {5, 4, 3};
 const int pushButton_ES = 6;
 
 /**
- * @brief Digital pins for renewables push button.
- */
-const int pushButton_Renewables = 7;
-
-/**
  * @brief Digital pins for solid state relay channels.
  */
 const int SSRPin[3] = {8, 9, 10};
@@ -35,11 +30,6 @@ int pushbuttonState[3] = {0, 0, 0};
  * @brief Checks current status of the emergency stop pushbutton.
  */
 int pushbuttonState_ES = 1;
-
-/**
- * @brief Checks current status of the pushbutton for renewables.
- */
-int pushbuttonState_renewables = 0;
 
 /**
  * @brief Stores current status of the SSR.
@@ -230,11 +220,6 @@ void loop() {
         digitalWrite(SSRPin[i], SSROFF);
       }
     }
-    state_renewables = digitalRead(pushButton_Renewables);
-    if(state_renewables == HIGH && PushbuttonStatus_renewables == LOW) {
-      pushbuttonState_renewables = 1-pushbuttonState_renewables;
-    }
-    PushbuttonStatus_renewables = state_renewables;
   
     if(pushbuttonState[0] == HIGH) {
       load = load + FIVEWATT_Led; // 5 w bulb added to load variable
@@ -245,11 +230,11 @@ void loop() {
     if(pushbuttonState[2] == HIGH) {
       load = load + FOURTYWATT_Bulb; // 40 w bulb added to load variable
     }
-    if(/*pushbuttonState_renewables == HIGH &&*/ solar_state == HIGH) {
+    if(solar_state == HIGH) {
       load = load - solar;
       solar_flag = HIGH;
     }
-    if(pushbuttonState_renewables == HIGH && wind_state == HIGH) {
+    if(wind_state == HIGH) {
       load = load - wind;
       wind_flag = HIGH;
     }
@@ -277,7 +262,8 @@ else{
     delay(time_period);
   }
   checkSpeed(old_freq);
-  Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
+  //Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
+  Serial.println(wind_voltage, 1);
 }
 
 /**
