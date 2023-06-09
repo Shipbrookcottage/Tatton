@@ -186,7 +186,7 @@ void loop() {
     solar_state = 0;
   }
   float wind_voltage = analogRead(A6)*5*5.0/1023;
-  if(wind_voltage > 0.4) {
+  if(wind_voltage > 0.2) {
     wind_state = 1;
   }
   else {
@@ -262,8 +262,7 @@ else{
     delay(time_period);
   }
   checkSpeed(old_freq);
-  //Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
-  Serial.println(wind_voltage, 1);
+  Serial.print(old_freq, 0); Serial.print(","); Serial.print(wind_voltage, 1); Serial.print(","); Serial.print(solar_voltage, 1); Serial.println("");
 }
 
 /**
@@ -274,12 +273,11 @@ else{
  */
 void freq(unsigned long t1, unsigned long t2){
   float frequency = ((1000/((float)t2-(float)t1))/2)*6; //milliseconds
-  if(frequency > 1.5*old_freq && frequency>60) {
+  if(frequency > 1.3*old_freq && frequency>60) {        // This line is to try and prevent the speed meter from flickering around
     frequency = old_freq;
   }
   old_freq = frequency;
-  //Serial.println(frequency);
-  if(frequency >= 40 && frequency <= 60){
+  if(frequency >= 35 && frequency <= 65){
     startFlag = true;
     timerFlag = timerFlag + 1;
   }
@@ -302,9 +300,6 @@ void checkSpeed(float frequency){
 
   // Power off the interactive loads
   if (loadPowerOff) {
-    /*for (int i = 0; i < 4; i++) {
-      digitalWrite(SSRPin[i], SSROFF);
-    }*/
     TurnOff();
     loadPowerOff = false; // Reset the flag
   }
