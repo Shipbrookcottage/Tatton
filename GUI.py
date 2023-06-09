@@ -31,7 +31,8 @@ import threading
 import csv
 from datetime import date
 from PIL import ImageTk, Image
-import upload_difficulty
+
+os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/4th_Year_Project/Code/Arduino/Difficulty -u -p /dev/cu.usbmodem1301')
 
 ## @var filepath
 # Global variable that represents the file path for the data.csv file.
@@ -286,6 +287,7 @@ class Home(tk.Frame):
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         button_width = int(screen_width * 0.0075)
+        comp_button_width = int(screen_width * 0.01)
         button_height = int(screen_height * 0.0025)
         button_font_size = int(screen_height * (36/1440))
         welcome_font_size = int(screen_height * (40/1440))
@@ -298,7 +300,7 @@ class Home(tk.Frame):
         welcome.place(relx=0.5, rely=0.1, anchor='center')
         
         button = tk.Button(self, text='Competition Mode', command=lambda: controller.show_frame(CompMode), font=('Arial', button_font_size, 'bold'))
-        button.configure(width = button_width, height = button_height)
+        button.configure(width = comp_button_width, height = button_height)
         button.place(relx=0.25, rely=0.9, anchor='center')
 
         button2 = tk.Button(self, text='Grid Mode', command=lambda: controller.show_frame(Grid), font=('Arial', button_font_size, 'bold'))
@@ -347,8 +349,8 @@ class CompMode(tk.Frame):
         
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        welcome_font_size = int(screen_height * (30/1440))
-        text_font_size = int(screen_height * (12/1440))
+        welcome_font_size = int(screen_height * (80/1440))
+        text_font_size = int(screen_height * (40/1440))
         
         welcome = tk.Label(self, text='Welcome to the Competition Mode!', font = ('Verdana', welcome_font_size))
         welcome.place(relx=0.5, rely=0.3, anchor='center')
@@ -370,6 +372,9 @@ class CompMode(tk.Frame):
         button2 = tk.Button(self, text='Start Competition Mode', command=lambda: controller.show_frame(GraphPage),
                     font = ('Verdana', text_font_size))
         button2.place(relx=0.5, rely=0.6, anchor='center')
+        
+        difficulty_instructions = tk.Label(self, text = "Adjust 3 way dial to change difficulty", font = ('Verdana', text_font_size)).place(relx=0.5, rely=0.7, anchor='center')
+        difficulty = tk.Label(self, text = "Left = Easy     Middle = Medium     Right = Hard", font = ('Verdana', text_font_size)).place(relx=0.5, rely=0.75, anchor='center')
            
 ## @class GraphPage
 # @brief A custom frame widget for the graph page.
@@ -409,16 +414,16 @@ class GraphPage(tk.Frame):
         adjusted_width = frame_width_scaling * 150
         
         # For the current graph
-        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 10, color='c')
+        current_canvas = graph(self, title='Current Graph', ylabel='Current (A)', xlabel='Time (s)', label='Current (A)', ylim = 15, color='c')
         current_canvas.configure(borderwidth = 10, relief = 'solid')
         current_canvas.place(x = 0.007 * screen_width, y = 0.056*screen_height)
         
         # For the voltage graph
-        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 100, color='g')
+        voltage_canvas = graph(self, title='Voltage Graph', ylabel='Voltage (V)', xlabel='Time (s)', label='Voltage (V)', ylim = 150, color='g')
         voltage_canvas.place(x = 0.007 * screen_width, y = 0.5 * screen_height)
         
         # For the power graph
-        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 250, color='b')
+        power_canvas = graph(self, title='Power Graph', ylabel='Power (W)', xlabel='Time (s)', label='Power (W)', ylim = 550, color='b')
         power_canvas.place(x = 0.417 * screen_width, y = 0.056 * screen_height)
         
         energy_frame = tk.LabelFrame(self, text='Cumulative Energy (J)', height = adjusted_height, width = adjusted_width, font = ('Verdana', frame_font_size)).place(relx=0.694, rely=0.667)
@@ -434,12 +439,13 @@ class GraphPage(tk.Frame):
         
         speed_meter_title = tk.Label(self, text = "Electrical Frequency (Hz)", font = ('Verdana', speed_title_size)).place(relx = 0.5, rely = 0.53, anchor = 'center')
         
-        speed = Meter(self, radius=adjusted_radius, start=0, end=150, border_width=0,
+        speed = Meter(self, radius=adjusted_radius, start=0, end=220, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
-               text_font="DS-Digital 30", scale_color="white", needle_color="red")
+               text_font="DS-Digital 30", major_divisions=20, minor_divisions = 5, scale_color="white", needle_color="red")
         
         speed.place(relx=0.417, rely = 0.556)
         
+        # Function that uploads the competition mode code to the Arduino, opens the serial port and starts displaying the data
         def get_data():
             os.system('arduino-cli compile -b arduino:avr:mega /Users/tadiwadzvoti/Documents/Arduino/C_Mode_Working -u -p /dev/cu.usbmodem1301')
             ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
@@ -543,9 +549,9 @@ class Leaderboard(tk.Frame):
         screen_height = self.winfo_screenheight()
         font_scaling = screen_height / 1440
         
-        title_font = ("Arial", int(25 * font_scaling), "bold")
-        listbox_font = ("Arial", int(20 * font_scaling))
-        listbox_width = int((50/1440) * screen_width)
+        title_font = ("Arial", int(40 * font_scaling), "bold")
+        listbox_font = ("Arial", int(30 * font_scaling))
+        listbox_width = int((40/1440) * screen_width)
         listbox_height = int((20/900) * self.winfo_screenmmheight())
         
         # Flag to check state of leaderboard view
@@ -670,7 +676,7 @@ class Grid(tk.Frame):
         screen_height = self.winfo_screenheight()
         screen_width = self.winfo_screenwidth()
         font_scaling = screen_height / 1440
-        speed_title_size = int(20 * font_scaling)
+        speed_title_size = int(60 * font_scaling)
         
         # Size scaling for Speed Meter
         meter_scaling = min(screen_height / 900, screen_width / 1440)
@@ -683,6 +689,12 @@ class Grid(tk.Frame):
         adjusted_height = frame_height_scaling * 200
         adjusted_width = frame_width_scaling * 300
         
+        title_label = tk.Label(self, text = "Grid Mode", font = ("Verdana", int(80 * font_scaling), 'bold')).place(relx = 0.5, rely = 0.1, anchor = 'center')
+        
+        instructions = tk.Label(self, text = "Stay within the 35 - 65 Hz threshold to activate the loads", font = ("Verdana", int(50 * font_scaling))).place(relx = 0.5, rely = 0.2, anchor = 'center')
+        
+        instructions2 = tk.Label(self, text = "If you fall out of the threshold for 5 seconds grid mode ends", font = ("Verdana", int(50 * font_scaling))).place(relx = 0.5, rely = 0.25, anchor = 'center')
+        
         wind_frame = tk.LabelFrame(self, text='Wind Turbine Voltage (V)', height = adjusted_height, width = adjusted_width, borderwidth = border_thickness).place(relx=0.1, rely=0.5, anchor = 'w')
         
         wind = WindLabel(wind_frame)
@@ -691,14 +703,14 @@ class Grid(tk.Frame):
         
         solar = SolarLabel(solar_frame)
         
-        speed_meter_title = tk.Label(self, text = "Electrical Frequency (Hz)", font = ('Verdana', speed_title_size)).place(relx = 0.5, rely = 0.53, anchor = 'center')
+        speed_meter_title = tk.Label(self, text = "Electrical Frequency (Hz)", font = ('Verdana', speed_title_size)).place(relx = 0.5, rely = 0.75, anchor = 'center')
         
         speed = Meter(self, radius=adjusted_radius, start=0, end=90, border_width=0,
                fg="black", text_color="white", start_angle=270, end_angle=-270,
                text_font="DS-Digital 30", scale_color="white", needle_color="red")
-        speed.set_mark(55, 90, 'red')
-        speed.set_mark(45, 55, 'green')
-        speed.set_mark(0, 45, 'yellow')
+        speed.set_mark(65, 90, 'red')
+        speed.set_mark(35, 65, 'green')
+        speed.set_mark(0, 35, 'yellow')
         speed.place(relx = 0.5, rely = 0.5, anchor = 'center')
         
         def get_data_grid():
@@ -732,6 +744,7 @@ class Grid(tk.Frame):
             t.start()
         
         def back_to_home():
+            pause()
             wind.hide()
             solar.hide()
             controller.show_frame(Home)
