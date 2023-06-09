@@ -179,7 +179,7 @@ void cycle(int runtime, float duty){
 
     cum_energy = cum_energy + energy;
 
-    val = map(avg_voltage, 0, 100, 0, NUM_LEDS); // here voltage is being mapped to the LED strip not power
+    val = map(avg_voltage, 0, 100, 0, NUM_LEDS); // here voltage is being mapped to the LED strip with a 100 V maximum
     for(int i = 0; i < val; i++){
       leds[i] = CRGB::Red;
       FastLED.show();
